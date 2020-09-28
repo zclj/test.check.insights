@@ -1,7 +1,34 @@
-(ns test.check.insights.coverage
-  ;;(:require [])
-  ;;(:import [java.lang Math])
-  )
+(ns test.check.insights.coverage)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Resources
+
+;; https://github.com/nick8325/quickcheck/blob/09a569db8de0df14f8514b30d4bfe7acb41f9c41/src/Test/QuickCheck/State.hs#L63
+
+;; https://github.com/nick8325/quickcheck/blob/09a569db8de0df14f8514b30d4bfe7acb41f9c41/src/Test/QuickCheck/Test.hs#L579
+
+;; https://github.com/nick8325/quickcheck/blob/09a569db8de0df14f8514b30d4bfe7acb41f9c41/src/Test/QuickCheck/Property.hs#L499
+
+;; DO NOT COUNT DISCARDED TEST AGAINST COVERAGE
+;; https://hackage.haskell.org/package/QuickCheck-2.13.2/docs/Test-QuickCheck.html#v:checkCoverage
+;; When you use checkCoverage, QuickCheck uses a statistical test to account for the role of luck in coverage failures. It will run as many tests as needed until it is sure about whether the coverage requirements are met. If a coverage requirement is not met, the property fails.
+;; just using coverage show the stats, checkCoverage will fail it
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; TODO - java.lang.Math -> JS
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Inverse normal cumulative distribution function (same as QuickCheck)
+
+;; Algorithm taken from
+;; https://web.archive.org/web/20151110174102/http://home.online.no/~pjacklam/notes/invnorm/
+;; Accurate to about one part in 10^9.
+
+;; The 'erf' package uses the same algorithm, but with an extra step
+;; to get a fully accurate result, which we skip because it requires
+;; the 'erfc' function.
 
 (def p-low 0.02425)
 (def p-high (- 1 p-low))
@@ -52,7 +79,8 @@
           (+ (* (+ (* (+ (* (+ (* d1 q) d2) q) d3) q) d4) q) 1)))))
   )
 
-;; TODO - java.lang.Math -> JS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn wilson
   [k n z]
   (let [nf n
@@ -85,18 +113,64 @@
     (< (wilson-high k n (/ 1 certainty)) p)
     (< k (* p n))))
 
-;; TODO: set as default opt in check-coverage
-(def example-confidence
+(def default-confidence
   {:certainty 1.0E9
    :tolerance 0.9})
 
 (defn check-coverage
-  [tests-n class-n p]
-  {::sufficiently-covered?
-   (sufficiently-covered? example-confidence tests-n class-n p)
-   ::insufficiently-covered?
-   (insufficiently-covered? 1.0E9 tests-n class-n p)})
+  ([tests-n class-n p]
+   (check-coverage tests-n class-n p default-confidence))
+  ([tests-n class-n p confidence]
+   {::sufficiently-covered?
+    (sufficiently-covered? confidence tests-n class-n p)
+    ::insufficiently-covered?
+    (insufficiently-covered? (:certainty confidence) tests-n class-n p)}))
 
-(defn power-of-2
-  [x]
-  (int (Math/pow 2 x)))
+(defn apply-coverage
+  [coverage-m args]
+  (reduce-kv
+   (fn [acc k {:keys [test.check.insights/classify]}]
+     (let [classification
+           (mapv
+            (fn [arg]
+              (apply classify arg))
+            args)]
+       (assoc acc k (count (filter identity classification)))))
+   {}
+   coverage-m))
+
+(defn evaluate-coverage
+  [coverage-m coverage number-of-tests]
+  (reduce-kv
+   (fn [acc k {:keys [test.check.insights/cover]}]
+     (merge
+      acc
+      {k (check-coverage number-of-tests (get coverage k) (/ cover 100))}))
+   {}
+   coverage-m))
+
+(defn filter-k
+  [k eval-result]
+  (filterv
+   (fn [result]
+     (get (val result) k))
+   eval-result))
+
+(def filter-sufficient (partial filter-k ::sufficiently-covered?))
+(def filter-insufficient (partial filter-k ::insufficiently-covered?))
+
+;; (defn filter-sufficient
+;;   [eval-result]
+;;   (filterv
+;;    (fn [er]
+;;      (::sufficiently-covered? (val er)))
+;;    eval-result))
+
+;; (defn filter-insufficient
+;;   [eval-result]
+;;   (filterv
+;;    (fn [er]
+;;      (::insufficiently-covered? (val er)))
+;;    eval-result))
+
+
