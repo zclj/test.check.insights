@@ -9,7 +9,7 @@
         (assoc-in acc [:test.check.insights/labels k] []))
       {:test.check.insights/labels
        {:test.check.insights/labled   []
-        :test.check.insights/unlabled []}
+        :test.check.insights/unlabled #{}}
        :test.check.insights/label-classifications
        label-category}
       (keys label-category)))
@@ -24,19 +24,17 @@
         (if (and args (apply (:test.check.insights/classify v) args))
           (-> acc
               (update-in
-               [:test.check.insights/labels k]
-               conj args)
+               [:test.check.insights/labels k] conj args)
               (update-in
-               [:test.check.insights/labels :test.check.insights/labled]
-               conj args)
+               [:test.check.insights/labels :test.check.insights/labled] conj args)
+              ;; remove from set
               (update-in
                [:test.check.insights/labels :test.check.insights/unlabled]
-               (fn [x] (vec (drop-last x)))))
+               disj args))
           acc))
       (update-in
        label-category
-       [:test.check.insights/labels :test.check.insights/unlabled]
-       conj args)
+       [:test.check.insights/labels :test.check.insights/unlabled] conj args)
       (:test.check.insights/label-classifications label-category)))
    label-categories))
 

@@ -15,14 +15,14 @@
       (is (= [{:test.check.insights/label-classifications label-classifications-category-1
                :test.check.insights/labels
                {:test.check.insights/labled   []
-                :test.check.insights/unlabled []
+                :test.check.insights/unlabled #{}
                 :negative                     []
                 :positive                     []
                 :ones                         []}}
               {:test.check.insights/label-classifications label-classifications-category-2
                :test.check.insights/labels
                {:test.check.insights/labled   []
-                :test.check.insights/unlabled []
+                :test.check.insights/unlabled #{}
                 :more-neg                     []
                 :less-neg                     []}}]
              (sut/init-labels
@@ -43,7 +43,7 @@
                    label-classifications-category-1
                    :test.check.insights/labels
                    {:test.check.insights/labled   [[0] [-1]]
-                    :test.check.insights/unlabled [["a"]]
+                    :test.check.insights/unlabled #{["a"]}
                     :negative                     [[-1]]
                     :positive                     [[0]]
                     :ones                         []}}
@@ -51,14 +51,14 @@
                    label-classifications-category-2
                    :test.check.insights/labels
                    {:test.check.insights/labled   []
-                    :test.check.insights/unlabled []
+                    :test.check.insights/unlabled #{}
                     :more-neg                     []
                     :less-neg                     []}}]]
       (is (= [{:test.check.insights/label-classifications
                label-classifications-category-1
                :test.check.insights/labels
                {:test.check.insights/labled   [[0] [-1] [1] [1]]
-                :test.check.insights/unlabled [["a"]]
+                :test.check.insights/unlabled #{["a"]}
                 :negative                     [[-1]]
                 :positive                     [[0] [1]]
                 :ones                         [[1]]}}
@@ -66,7 +66,7 @@
                label-classifications-category-2
                :test.check.insights/labels
                {:test.check.insights/labled   []
-                :test.check.insights/unlabled [[1]]
+                :test.check.insights/unlabled #{[1]}
                 :more-neg                     []
                 :less-neg                     []}}]
              (sut/update-labels labels [1])))))

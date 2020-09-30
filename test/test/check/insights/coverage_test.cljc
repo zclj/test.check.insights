@@ -50,7 +50,7 @@
             {:negative 0}
             1000)))))
 
-;; Make sure constants are not changed by misstake
+;; Make sure constants are not changed by mistake
 (deftest constanst-should-be-correct
   (let [a1 -3.969683028665376e+01
         a2 2.209460984245205e+02
