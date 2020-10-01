@@ -3,7 +3,8 @@
             [clojure.test.check.generators :as gen]
             [clojure.test.check :as tc]
             [test.check.insights.coverage :as cv]
-            [test.check.insights.labels :as lb]))
+            [test.check.insights.labels :as lb]
+            [test.check.insights.collect :as cl]))
 
 (defmacro for-all
   [insights bindings & body]
@@ -94,12 +95,13 @@
 (defn quick-check
   "Wraps test.check.quick-check with insights. opts are passed to test.check.quick-check so any options supported by quick-check are valid. Note that coverage failure will not fail the tests. If a :reporter-fn is provided it will be called before labels are applied."
   [num-tests {:keys [::property ::coverage ::labels ::collect]} & opts]
-  (let [{:keys [reporter-filter-fn reporter-fn]
+  (let [;; TODO - include humanize/report-output options
+        {:keys [reporter-filter-fn reporter-fn]
          :or   {reporter-filter-fn (fn [m] (= (:type m) :trial))}}
         opts
         ;; TODO - should classifications and label results be separated?
-        labels-db   (atom (lb/init-labels labels))
-        reporter-db (atom [])
+        labels-db          (atom (lb/init-labels labels))
+        reporter-db        (atom [])
         insights-reporter-fn
         (fn [m]
           (when reporter-fn
@@ -107,9 +109,9 @@
           (when (reporter-filter-fn m)
             (swap! labels-db lb/update-labels (:args m))
             (swap! reporter-db conj (:args m))))
-        final-opts  (concat opts [:reporter-fn insights-reporter-fn])
-        quick-check-result
-        (apply (partial tc/quick-check num-tests property) final-opts)
+        final-opts         (concat opts [:reporter-fn insights-reporter-fn])
+        quick-check-result (apply tc/quick-check num-tests property final-opts)
+        ;; TODO - move this to the coverage ns
         coverage-result
         (reduce
          (fn [acc coverage-category]
@@ -128,10 +130,14 @@
              (conj acc (assoc coverage-result ::failed failed))))
          []
          coverage)
-        ]
+        collector-result   (if collect
+                             (cl/collect collect @reporter-db)
+                             {})]
     (-> quick-check-result
         (assoc ::labels (mapv ::labels @labels-db))
-        (assoc ::coverage coverage-result))))
+        ;; TODO - include percentages in the coverage result
+        (assoc ::coverage coverage-result)
+        (assoc ::collect collector-result))))
 
 (comment
   (def property
@@ -153,7 +159,7 @@
         :ones     {::classify (fn [x] (= 1 x))}}
        {:more-neg {::classify (fn [x] (< x -100))}
         :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))}}]
-      ::collect [{::collector (fn [x] (count x))}]}
+      ::collect [{::collector (fn [x] (identity x))}]}
      [x gen/int]
      (= (inc x) (sut x))))
 
