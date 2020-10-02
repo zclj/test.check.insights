@@ -135,7 +135,7 @@
             (fn [arg]
               (apply classify arg))
             args)]
-       (assoc acc k (count (filter identity classification)))))
+       (assoc acc k {::coverage-count (count (filter identity classification))})))
    {}
    coverage-m))
 
@@ -143,9 +143,12 @@
   [coverage-m coverage number-of-tests]
   (reduce-kv
    (fn [acc k {:keys [test.check.insights/cover]}]
-     (merge
-      acc
-      {k (check-coverage number-of-tests (get coverage k) (/ cover 100))}))
+     (let [coverage-result
+           (check-coverage
+            number-of-tests (get-in coverage [k ::coverage-count]) (/ cover 100))]
+       (merge
+        acc
+        {k (merge (get coverage k) {::target-coverage-% cover} coverage-result)})))
    {}
    coverage-m))
 
@@ -158,6 +161,49 @@
 
 (def filter-sufficient (partial filter-k ::sufficiently-covered?))
 (def filter-insufficient (partial filter-k ::insufficiently-covered?))
+
+(defn report-coverage
+  [coverage-categories args]
+  (reduce
+   (fn [acc coverage-category]
+     (let [coverage-result (apply-coverage coverage-category args)
+           evaluated-result
+           (evaluate-coverage coverage-category coverage-result (count args))
+           failed (reduce-kv
+                   (fn [acc k v]
+                     (if (not (::sufficiently-covered? v))
+                       (conj acc k)
+                       acc))
+                   []
+                   evaluated-result)]
+       (conj acc (assoc coverage-result :test.check.insights/failed failed))))
+   []
+   coverage-categories))
+
+(defn ->%
+  [nom denom]
+  (* 100 (double (/ nom denom))))
+
+;; (defn summerize-coverage
+;;   [coverage-result]
+;;   (let [coverage   (get-in coverage-result [:coverage :coverage])
+;;         test-count (:num-tests coverage-result)]
+;;     (update-in
+;;      coverage-result
+;;      [:coverage :coverage]
+;;      (fn [m]
+;;        (reduce-kv
+;;         (fn [acc k v]
+;;           (merge acc {k (->% v test-count)}))
+;;         {}
+;;         m)))))
+
+(defn humanize-coverage-report
+  [coverage-reports]
+  (mapv
+   (fn [report]
+     (reduce-))
+   coverage-reports))
 
 ;; (defn filter-sufficient
 ;;   [eval-result]

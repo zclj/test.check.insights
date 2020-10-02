@@ -99,7 +99,6 @@
         {:keys [reporter-filter-fn reporter-fn]
          :or   {reporter-filter-fn (fn [m] (= (:type m) :trial))}}
         opts
-        ;; TODO - should classifications and label results be separated?
         labels-db          (atom (lb/init-labels labels))
         reporter-db        (atom [])
         insights-reporter-fn
@@ -111,33 +110,18 @@
             (swap! reporter-db conj (:args m))))
         final-opts         (concat opts [:reporter-fn insights-reporter-fn])
         quick-check-result (apply tc/quick-check num-tests property final-opts)
-        ;; TODO - move this to the coverage ns
-        coverage-result
-        (reduce
-         (fn [acc coverage-category]
-           (let [coverage-result
-                 (cv/apply-coverage coverage-category @reporter-db)
-                 evaluated-result
-                 (cv/evaluate-coverage
-                  coverage-category coverage-result (count @reporter-db))
-                 failed (reduce-kv
-                         (fn [acc k v]
-                           (if (not (::cv/sufficiently-covered? v))
-                             (conj acc k)
-                             acc))
-                         []
-                         evaluated-result)]
-             (conj acc (assoc coverage-result ::failed failed))))
-         []
-         coverage)
+        coverage-result    (cv/report-coverage coverage @reporter-db)
         collector-result   (if collect
                              (cl/collect collect @reporter-db)
                              {})]
     (-> quick-check-result
         (assoc ::labels (mapv ::labels @labels-db))
-        ;; TODO - include percentages in the coverage result
         (assoc ::coverage coverage-result)
         (assoc ::collect collector-result))))
+
+(defn humanize
+  [{:keys [::labels ::coverage ::collect]}])
+  
 
 (comment
   (def property

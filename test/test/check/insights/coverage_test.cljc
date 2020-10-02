@@ -16,13 +16,14 @@
 
 (deftest apply-coverage
   (testing "Returns count of classifications"
-    (is (= {:negative 2, :positive 2}
+    (is (= {:negative {::sut/coverage-count 2}
+            :positive {::sut/coverage-count 2}}
            (sut/apply-coverage
             {:negative {:test.check.insights/classify (fn [x] (< x 0))}
              :positive {:test.check.insights/classify (fn [x] (>= x 0))}}
             [[0] [1] [-1] [-2]]))))
   (testing "Count is 0 if there are no classifications"
-    (is (= {:negative 0}
+    (is (= {:negative {::sut/coverage-count 0}}
            (sut/apply-coverage
             {:negative {:test.check.insights/classify (fn [x] (< x 0))}}
             [[0] [1]])))))
@@ -30,25 +31,91 @@
 (deftest evaluate-coverage
   (testing "Coverage is inconclusive [false, false]"
     (is (= {:negative {::sut/sufficiently-covered?   false,
-                       ::sut/insufficiently-covered? false}}
+                       ::sut/insufficiently-covered? false
+                       ::sut/coverage-count          2
+                       ::sut/target-coverage-%       5}}
            (sut/evaluate-coverage
             {:negative {:test.check.insights/cover 5}}
-            {:negative 2}
+            {:negative {::sut/coverage-count 2}}
             100))))
   (testing "Coverage is sufficient [true, false]"
     (is (= {:negative {::sut/sufficiently-covered?   true,
-                       ::sut/insufficiently-covered? false}}
+                       ::sut/insufficiently-covered? false
+                       ::sut/coverage-count          20
+                       ::sut/target-coverage-%       5}}
            (sut/evaluate-coverage
             {:negative {:test.check.insights/cover 5}}
-            {:negative 20}
+            {:negative {::sut/coverage-count 20}}
             100))))
   (testing "Coverage is insufficient [false, true]"
     (is (= {:negative {::sut/sufficiently-covered?   false,
-                       ::sut/insufficiently-covered? true}}
+                       ::sut/insufficiently-covered? true
+                       ::sut/coverage-count          0
+                       ::sut/target-coverage-%       5}}
            (sut/evaluate-coverage
             {:negative {:test.check.insights/cover 5}}
-            {:negative 0}
-            1000)))))
+            {:negative {::sut/coverage-count 0}}
+            1000))))
+  (testing "Multiple covage classifications"
+    (is (= {:negative {::sut/sufficiently-covered?   false,
+                       ::sut/insufficiently-covered? false
+                       ::sut/coverage-count          2
+                       ::sut/target-coverage-%       5}
+            :positive {::sut/sufficiently-covered?   false,
+                       ::sut/insufficiently-covered? false
+                       ::sut/coverage-count          20
+                       ::sut/target-coverage-%       50}}
+           (sut/evaluate-coverage
+            {:negative {:test.check.insights/cover 5}
+             :positive {:test.check.insights/cover 50}}
+            {:negative {::sut/coverage-count 2}
+             :positive {::sut/coverage-count 20}}
+            100)))))
+
+(deftest report-coverage
+  (testing "Report the coverage result of multiple coverage categories"
+    (let [coverage-categories
+          [{:negative {:test.check.insights/classify (fn [x] (< x 0))
+                       :test.check.insights/cover    50}
+            :positive {:test.check.insights/classify (fn [x] (>= x 0))
+                       :test.check.insights/cover    50}
+            :ones     {:test.check.insights/classify (fn [x] (= x 1))
+                       :test.check.insights/cover    5}}
+           {:more-neg {:test.check.insights/classify (fn [x] (< x -100))
+                       :test.check.insights/cover    10}
+            :less-neg {:test.check.insights/classify (fn [x] (and (> x -100) (< x 0)))
+                       :test.check.insights/cover    10}}]]
+      (is (= [{:negative 3
+               :positive 2
+               :ones     1
+               :test.check.insights/failed
+               [:negative :positive :ones]}
+              {:more-neg 1
+               :less-neg 2
+               :test.check.insights/failed
+               [:more-neg :less-neg]}]
+             (sut/report-coverage
+              coverage-categories
+              [[1] [-1] [-2] [-150] [10]]))))))
+
+(deftest humanize-coverage-report
+  (testing "Humanize the format of the reported coverage"
+    (let [coverage-report
+          [{:negative 3
+            :positive 2
+            :ones     1
+            :test.check.insights/failed
+            [:negative :positive :ones]}
+           {:more-neg 1
+            :less-neg 2
+            :test.check.insights/failed
+            [:more-neg :less-neg]}]]
+      (is (= 0 1
+             ;;(sut/humanize-coverage-report coverage-report)
+             ))))
+  )
+
+
 
 ;; Make sure constants are not changed by mistake
 (deftest constanst-should-be-correct
