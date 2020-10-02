@@ -85,15 +85,33 @@
                        :test.check.insights/cover    10}
             :less-neg {:test.check.insights/classify (fn [x] (and (> x -100) (< x 0)))
                        :test.check.insights/cover    10}}]]
-      (is (= [{:negative 3
-               :positive 2
-               :ones     1
-               :test.check.insights/failed
-               [:negative :positive :ones]}
-              {:more-neg 1
-               :less-neg 2
-               :test.check.insights/failed
-               [:more-neg :less-neg]}]
+      (is (= [{:negative
+               {::sut/sufficiently-covered?   false
+                ::sut/insufficiently-covered? false
+                ::sut/coverage-count          3
+                ::sut/target-coverage-%       50}
+               :positive
+               {::sut/sufficiently-covered?   false
+                ::sut/insufficiently-covered? false
+                ::sut/coverage-count          2
+                ::sut/target-coverage-%       50}
+               :ones
+               {::sut/sufficiently-covered?   false
+                ::sut/insufficiently-covered? false
+                ::sut/coverage-count          1
+                ::sut/target-coverage-%       5}
+               :test.check.insights/failed [:negative :positive :ones]}
+              {:more-neg
+               {::sut/sufficiently-covered?   false
+                ::sut/insufficiently-covered? false
+                ::sut/coverage-count          1
+                ::sut/target-coverage-%       10}
+               :less-neg
+               {::sut/sufficiently-covered?   false
+                ::sut/insufficiently-covered? false
+                ::sut/coverage-count          2
+                ::sut/target-coverage-%       10}
+               :test.check.insights/failed [:more-neg :less-neg]}]
              (sut/report-coverage
               coverage-categories
               [[1] [-1] [-2] [-150] [10]]))))))
@@ -101,17 +119,35 @@
 (deftest humanize-coverage-report
   (testing "Humanize the format of the reported coverage"
     (let [coverage-report
-          [{:negative 3
-            :positive 2
-            :ones     1
-            :test.check.insights/failed
-            [:negative :positive :ones]}
-           {:more-neg 1
-            :less-neg 2
-            :test.check.insights/failed
-            [:more-neg :less-neg]}]]
-      (is (= 0 1
-             ;;(sut/humanize-coverage-report coverage-report)
+          [{:negative
+            {::sut/sufficiently-covered?   false
+             ::sut/insufficiently-covered? false
+             ::sut/coverage-count          3
+             ::sut/target-coverage-%       50}
+            :positive
+            {::sut/sufficiently-covered?   false
+             ::sut/insufficiently-covered? false
+             ::sut/coverage-count          2
+             ::sut/target-coverage-%       50}
+            :ones
+            {::sut/sufficiently-covered?   false
+             ::sut/insufficiently-covered? false
+             ::sut/coverage-count          1
+             ::sut/target-coverage-%       5}
+            :test.check.insights/failed [:negative :positive :ones]}
+           {:more-neg
+            {::sut/sufficiently-covered?   false
+             ::sut/insufficiently-covered? false
+             ::sut/coverage-count          1
+             ::sut/target-coverage-%       10}
+            :less-neg
+            {::sut/sufficiently-covered?   false
+             ::sut/insufficiently-covered? false
+             ::sut/coverage-count          2
+             ::sut/target-coverage-%       10}
+            :test.check.insights/failed [:more-neg :less-neg]}]]
+      (is (= 0 
+             (sut/humanize-coverage-report coverage-report)
              ))))
   )
 

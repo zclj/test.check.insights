@@ -176,7 +176,11 @@
                        acc))
                    []
                    evaluated-result)]
-       (conj acc (assoc coverage-result :test.check.insights/failed failed))))
+       (conj
+        acc
+        (assoc
+         (merge coverage-result evaluated-result) :test.check.insights/failed failed)
+             )))
    []
    coverage-categories))
 
@@ -198,11 +202,13 @@
 ;;         {}
 ;;         m)))))
 
+;; TODO - add list of failed here instead of in evaluate-coverage
+;; TODO - add final coverage % and expected
 (defn humanize-coverage-report
   [coverage-reports]
   (mapv
    (fn [report]
-     (reduce-))
+     )
    coverage-reports))
 
 ;; (defn filter-sufficient
