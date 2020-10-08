@@ -95,35 +95,41 @@
 (defn quick-check
   "Wraps test.check.quick-check with insights. opts are passed to test.check.quick-check so any options supported by quick-check are valid. Note that coverage failure will not fail the tests. If a :reporter-fn is provided it will be called before labels are applied."
   [num-tests {:keys [::property ::coverage ::labels ::collect]} & opts]
-  (let [;; TODO - include humanize/report-output options
-        {:keys [reporter-filter-fn reporter-fn]
+  (let [{:keys [reporter-filter-fn reporter-fn]
          :or   {reporter-filter-fn (fn [m] (= (:type m) :trial))}}
         opts
-        labels-db          (atom (lb/init-labels labels))
-        reporter-db        (atom [])
-        insights-reporter-fn
-        (fn [m]
-          (when reporter-fn
-            (reporter-fn m))
-          (when (reporter-filter-fn m)
-            (swap! labels-db lb/update-labels (:args m))
-            (swap! reporter-db conj (:args m))))
-        final-opts         (concat opts [:reporter-fn insights-reporter-fn])
-        quick-check-result (apply tc/quick-check num-tests property final-opts)
-        coverage-result    (cv/report-coverage coverage @reporter-db)
-        collector-result   (if collect
-                             (cl/collect collect @reporter-db)
-                             {})]
+        labels-db            (atom (lb/init-labels labels))
+        reporter-db          (atom [])
+        insights-reporter-fn (fn [m]
+                               (when reporter-fn
+                                 (reporter-fn m))
+                               (when (reporter-filter-fn m)
+                                 (swap! labels-db lb/update-labels (:args m))
+                                 (swap! reporter-db conj (:args m))))
+        final-opts           (concat opts [:reporter-fn insights-reporter-fn])
+        quick-check-result   (apply tc/quick-check num-tests property final-opts)
+        coverage-result      (cv/report-coverage coverage @reporter-db)
+        collector-result     (if collect
+                               (cl/collect collect @reporter-db)
+                               {})]
     (-> quick-check-result
         (assoc ::labels (mapv ::labels @labels-db))
         (assoc ::coverage coverage-result)
         (assoc ::collect collector-result))))
 
-(defn humanize
-  [{:keys [::labels ::coverage ::collect]}])
+(defn humanize-report
+  [{:keys [::labels ::coverage ::collect] :as report}]
+  (cond-> report
+    labels   (update ::labels lb/humanize-report)
+    coverage (update ::coverage cv/humanize-coverage-report)
+    collect  (update ::collect cl/humanize-report)))
   
 
 (comment
+  (defn sut
+    [x]
+    (inc x))
+    
   (def property
     (for-all
      {::coverage
@@ -155,47 +161,6 @@
    10 property
    :seed 1 :reporter-fn #(println %)
    :reporter-filter-fn (fn [m] (println "I'm a FILTER") (= (:type m) :trial)))
-  )
 
-(comment
-  (def property-1
-    (prop/for-all [x gen/int] (= (inc x) (sut x))))
-
-  (defn report
-    []
-    (let [labels-db (atom [])]
-      (fn [m]
-        (swap! labels-db conj (:args m)))))
-  
-  (tc/quick-check 10 property-1 :reporter-fn (report))
-
-  @labels-db
-  )
-
-
-
-(comment
-  (defn sut
-    [x]
-    (inc x))
-
-  (def property
-    (for-all
-     {::coverage
-      [{:negative {::classify (fn [x] (< x 0))
-                   ::cover    50}
-        :positive {::classify (fn [x] (>= x 0))
-                   ::cover    50}
-        :ones     {::classify (fn [x] (= x 1))
-                   ::cover    1.2}}]
-      ::labels  [{:negative {::classify (fn [x] (< x 0))}
-                  :positive (fn [x] (>= x 0))
-                  :ones     (fn [x] (= 1 x))}
-                 {:more-neg (fn [x] (< x -100))
-                  :less-neg (fn [x] (and (> x -100) (< x 0)))}]
-      ::collect [{::collector (fn [x] (count x))}]}
-     [x gen/int]
-     (= (inc x) (sut x))))
-
-  (coverage-check property 100)
+  (humanize-report (quick-check 10 property))
   )

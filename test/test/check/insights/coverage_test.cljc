@@ -100,7 +100,8 @@
                 ::sut/insufficiently-covered? false
                 ::sut/coverage-count          1
                 ::sut/target-coverage-%       5}
-               :test.check.insights/failed [:negative :positive :ones]}
+               ;;:test.check.insights/failed [:negative :positive :ones]
+               }
               {:more-neg
                {::sut/sufficiently-covered?   false
                 ::sut/insufficiently-covered? false
@@ -111,7 +112,8 @@
                 ::sut/insufficiently-covered? false
                 ::sut/coverage-count          2
                 ::sut/target-coverage-%       10}
-               :test.check.insights/failed [:more-neg :less-neg]}]
+               ;;:test.check.insights/failed [:more-neg :less-neg]
+               }]
              (sut/report-coverage
               coverage-categories
               [[1] [-1] [-2] [-150] [10]]))))))
@@ -120,9 +122,9 @@
   (testing "Humanize the format of the reported coverage"
     (let [coverage-report
           [{:negative
-            {::sut/sufficiently-covered?   false
+            {::sut/sufficiently-covered?   true
              ::sut/insufficiently-covered? false
-             ::sut/coverage-count          3
+             ::sut/coverage-count          4
              ::sut/target-coverage-%       50}
             :positive
             {::sut/sufficiently-covered?   false
@@ -130,11 +132,10 @@
              ::sut/coverage-count          2
              ::sut/target-coverage-%       50}
             :ones
-            {::sut/sufficiently-covered?   false
+            {::sut/sufficiently-covered?   true
              ::sut/insufficiently-covered? false
-             ::sut/coverage-count          1
-             ::sut/target-coverage-%       5}
-            :test.check.insights/failed [:negative :positive :ones]}
+             ::sut/coverage-count          4
+             ::sut/target-coverage-%       5}}
            {:more-neg
             {::sut/sufficiently-covered?   false
              ::sut/insufficiently-covered? false
@@ -142,14 +143,22 @@
              ::sut/target-coverage-%       10}
             :less-neg
             {::sut/sufficiently-covered?   false
-             ::sut/insufficiently-covered? false
-             ::sut/coverage-count          2
-             ::sut/target-coverage-%       10}
-            :test.check.insights/failed [:more-neg :less-neg]}]]
-      (is (= 0 
-             (sut/humanize-coverage-report coverage-report)
-             ))))
-  )
+             ::sut/insufficiently-covered? true
+             ::sut/coverage-count          9
+             ::sut/target-coverage-%       10}}]]
+      (is (= [{:negative
+               #:test.check.insights{:coverage 40.0 :target-coverage 50}
+               :positive
+               #:test.check.insights{:coverage 20.0 :target-coverage 50}
+               :ones
+               #:test.check.insights{:coverage 40.0 :target-coverage 5}
+               :test.check.insights/statistically-failed [:positive]}
+              {:more-neg
+               #:test.check.insights{:coverage 10.0 :target-coverage 10}
+               :less-neg
+               #:test.check.insights{:coverage 90.0 :target-coverage 10}
+               :test.check.insights/statistically-failed [:more-neg :less-neg]}] 
+             (sut/humanize-coverage-report coverage-report))))))
 
 
 

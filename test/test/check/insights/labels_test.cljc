@@ -69,7 +69,24 @@
                 :test.check.insights/unlabled #{[1]}
                 :more-neg                     []
                 :less-neg                     []}}]
-             (sut/update-labels labels [1])))))
-  )
+             (sut/update-labels labels [1]))))))
+
+(deftest humanize-report
+  (is (= [{:negative 15.38461538461538
+           :positive 61.53846153846154
+           :ones     23.07692307692308}
+          {:more-neg 0.0
+           :less-neg 100.0}]
+         (sut/humanize-report
+          [{:test.check.insights/labled
+            [[0] [1] [1] [0] [2] [-3] [1] [1] [-2] [1] [1] [3] [7]]
+            :test.check.insights/unlabled #{}
+            :negative                     [[-3] [-2]]
+            :positive                     [[0] [1] [0] [2] [1] [1] [3] [7]]
+            :ones                         [[1] [1] [1]]}
+           {:test.check.insights/labled   [[-3] [-2]]
+            :test.check.insights/unlabled #{[7] [3] [0] [2] [1]}
+            :more-neg                     []
+            :less-neg                     [[-3] [-2]]}]))))
 
 

@@ -38,3 +38,20 @@
       (:test.check.insights/label-classifications label-category)))
    label-categories))
 
+(defn ->%
+  [nom denom]
+  (* 100 (double (/ nom denom))))
+
+(defn humanize-report
+  [label-reports]
+  (mapv
+   (fn [report]
+     (let [clean-report
+           (dissoc report :test.check.insights/labled :test.check.insights/unlabled)
+           total-count (reduce + (map #(count (val %)) clean-report))]
+       (reduce-kv
+        (fn [acc k collected]
+          (assoc acc k (->% (count collected) total-count)))
+        {}
+        clean-report)))
+   label-reports))

@@ -178,8 +178,9 @@
                    evaluated-result)]
        (conj
         acc
-        (assoc
-         (merge coverage-result evaluated-result) :test.check.insights/failed failed)
+        (merge coverage-result evaluated-result)
+        ;; (assoc
+        ;;  (merge coverage-result evaluated-result) :test.check.insights/failed failed)
              )))
    []
    coverage-categories))
@@ -204,13 +205,70 @@
 
 ;; TODO - add list of failed here instead of in evaluate-coverage
 ;; TODO - add final coverage % and expected
+;; (defn humanize-coverage-report
+;;   [coverage-reports]
+;;   (mapv
+;;    (fn [report]
+;;      (let [failed      (reduce-kv
+;;                         (fn [acc k v]
+;;                           (if (not (::sufficiently-covered? v))
+;;                             (conj acc k)
+;;                             acc))
+;;                         []
+;;                         report)
+;;            total-count (reduce + (map ::coverage-count (vals report)))
+;;            new-thingy  (reduce-kv
+;;                         (fn [acc k v]
+;;                           {:actual-% (->% v total-count)})
+;;                         {}
+;;                         (vals report))]
+;;        (merge report {:test.check.insights/failed failed
+;;                       :total-count                total-count
+;;                       :new-thingy                 new-thingy})))
+;;    coverage-reports))
+
+(defn humanize-coverage
+  [coverage total-count]
+  {:test.check.insights/coverage (->% (::coverage-count coverage) total-count)
+   :test.check.insights/target-coverage (::target-coverage-% coverage)})
+
 (defn humanize-coverage-report
   [coverage-reports]
   (mapv
-   (fn [report]
-     )
+   (fn [report-m]
+     (let [total-count  (reduce + (map ::coverage-count (vals report-m)))
+           failed       (reduce-kv
+                         (fn [acc k v]
+                           (if (not (::sufficiently-covered? v))
+                             (conj acc k)
+                             acc))
+                         []
+                         report-m)
+           human-report (reduce-kv
+                         (fn [acc k coverage]
+                           (assoc acc k (humanize-coverage coverage total-count)))
+                         {}
+                         report-m)]
+       (assoc human-report :test.check.insights/statistically-failed failed)))
    coverage-reports))
 
+(comment
+
+  (def coverage
+    {::sufficiently-covered?   false
+     ::insufficiently-covered? false
+     ::coverage-count          2
+     ::target-coverage-%       50})
+
+  (humanize-coverage coverage 10)
+
+  (def coverage-reports
+    [{:one coverage
+      :two coverage}
+     {:three coverage}])
+
+  (humanize-coverage-report coverage-reports)
+  )
 ;; (defn filter-sufficient
 ;;   [eval-result]
 ;;   (filterv
