@@ -32,7 +32,11 @@
 
 (deftest quick-check
   (is (= expected-test-result
-         (sut/quick-check 10 property :seed 1))))
+         (select-keys
+          (sut/quick-check 10 property :seed 1)
+          [::sut/labels
+           ::sut/coverage
+           ::sut/collect]))))
 
 (deftest humanize-report
   (is (= expected-humanized-report
@@ -59,32 +63,32 @@
    :test.check.insights/coverage
    [{:negative
      #:test.check.insights.coverage
-     {:coverage-count          4
-      :target-coverage-%       50
+     {:count          4
+      :target-%       50
       :sufficiently-covered?   false
       :insufficiently-covered? false}
      :positive
      #:test.check.insights.coverage
-     {:coverage-count          6
-      :target-coverage-%       50
+     {:count          6
+      :target-%       50
       :sufficiently-covered?   false
       :insufficiently-covered? false}
      :ones
      #:test.check.insights.coverage
-     {:coverage-count          0
-      :target-coverage-%       1.2
+     {:count          0
+      :target-%       1.2
       :sufficiently-covered?   false
       :insufficiently-covered? false}}
     {:more-neg
      #:test.check.insights.coverage
-     {:coverage-count          0
-      :target-coverage-%       10
+     {:count          0
+      :target-%       10
       :sufficiently-covered?   false
       :insufficiently-covered? false}
      :less-neg
      #:test.check.insights.coverage
-     {:coverage-count          4
-      :target-coverage-%       10
+     {:count          4
+      :target-%       10
       :sufficiently-covered?   false
       :insufficiently-covered? false}}]
    :test.check.insights/collect

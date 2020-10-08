@@ -16,14 +16,14 @@
 
 (deftest apply-coverage
   (testing "Returns count of classifications"
-    (is (= {:negative {::sut/coverage-count 2}
-            :positive {::sut/coverage-count 2}}
+    (is (= {:negative {::sut/count 2}
+            :positive {::sut/count 2}}
            (sut/apply-coverage
             {:negative {:test.check.insights/classify (fn [x] (< x 0))}
              :positive {:test.check.insights/classify (fn [x] (>= x 0))}}
             [[0] [1] [-1] [-2]]))))
   (testing "Count is 0 if there are no classifications"
-    (is (= {:negative {::sut/coverage-count 0}}
+    (is (= {:negative {::sut/count 0}}
            (sut/apply-coverage
             {:negative {:test.check.insights/classify (fn [x] (< x 0))}}
             [[0] [1]])))))
@@ -32,44 +32,44 @@
   (testing "Coverage is inconclusive [false, false]"
     (is (= {:negative {::sut/sufficiently-covered?   false,
                        ::sut/insufficiently-covered? false
-                       ::sut/coverage-count          2
-                       ::sut/target-coverage-%       5}}
+                       ::sut/count          2
+                       ::sut/target-%       5}}
            (sut/evaluate-coverage
             {:negative {:test.check.insights/cover 5}}
-            {:negative {::sut/coverage-count 2}}
+            {:negative {::sut/count 2}}
             100))))
   (testing "Coverage is sufficient [true, false]"
     (is (= {:negative {::sut/sufficiently-covered?   true,
                        ::sut/insufficiently-covered? false
-                       ::sut/coverage-count          20
-                       ::sut/target-coverage-%       5}}
+                       ::sut/count          20
+                       ::sut/target-%       5}}
            (sut/evaluate-coverage
             {:negative {:test.check.insights/cover 5}}
-            {:negative {::sut/coverage-count 20}}
+            {:negative {::sut/count 20}}
             100))))
   (testing "Coverage is insufficient [false, true]"
     (is (= {:negative {::sut/sufficiently-covered?   false,
                        ::sut/insufficiently-covered? true
-                       ::sut/coverage-count          0
-                       ::sut/target-coverage-%       5}}
+                       ::sut/count          0
+                       ::sut/target-%       5}}
            (sut/evaluate-coverage
             {:negative {:test.check.insights/cover 5}}
-            {:negative {::sut/coverage-count 0}}
+            {:negative {::sut/count 0}}
             1000))))
   (testing "Multiple covage classifications"
     (is (= {:negative {::sut/sufficiently-covered?   false,
                        ::sut/insufficiently-covered? false
-                       ::sut/coverage-count          2
-                       ::sut/target-coverage-%       5}
+                       ::sut/count          2
+                       ::sut/target-%       5}
             :positive {::sut/sufficiently-covered?   false,
                        ::sut/insufficiently-covered? false
-                       ::sut/coverage-count          20
-                       ::sut/target-coverage-%       50}}
+                       ::sut/count          20
+                       ::sut/target-%       50}}
            (sut/evaluate-coverage
             {:negative {:test.check.insights/cover 5}
              :positive {:test.check.insights/cover 50}}
-            {:negative {::sut/coverage-count 2}
-             :positive {::sut/coverage-count 20}}
+            {:negative {::sut/count 2}
+             :positive {::sut/count 20}}
             100)))))
 
 (deftest report-coverage
@@ -88,32 +88,28 @@
       (is (= [{:negative
                {::sut/sufficiently-covered?   false
                 ::sut/insufficiently-covered? false
-                ::sut/coverage-count          3
-                ::sut/target-coverage-%       50}
+                ::sut/count          3
+                ::sut/target-%       50}
                :positive
                {::sut/sufficiently-covered?   false
                 ::sut/insufficiently-covered? false
-                ::sut/coverage-count          2
-                ::sut/target-coverage-%       50}
+                ::sut/count          2
+                ::sut/target-%       50}
                :ones
                {::sut/sufficiently-covered?   false
                 ::sut/insufficiently-covered? false
-                ::sut/coverage-count          1
-                ::sut/target-coverage-%       5}
-               ;;:test.check.insights/failed [:negative :positive :ones]
-               }
+                ::sut/count          1
+                ::sut/target-%       5}}
               {:more-neg
                {::sut/sufficiently-covered?   false
                 ::sut/insufficiently-covered? false
-                ::sut/coverage-count          1
-                ::sut/target-coverage-%       10}
+                ::sut/count          1
+                ::sut/target-%       10}
                :less-neg
                {::sut/sufficiently-covered?   false
                 ::sut/insufficiently-covered? false
-                ::sut/coverage-count          2
-                ::sut/target-coverage-%       10}
-               ;;:test.check.insights/failed [:more-neg :less-neg]
-               }]
+                ::sut/count          2
+                ::sut/target-%       10}}]
              (sut/report-coverage
               coverage-categories
               [[1] [-1] [-2] [-150] [10]]))))))
@@ -124,28 +120,28 @@
           [{:negative
             {::sut/sufficiently-covered?   true
              ::sut/insufficiently-covered? false
-             ::sut/coverage-count          4
-             ::sut/target-coverage-%       50}
+             ::sut/count          4
+             ::sut/target-%       50}
             :positive
             {::sut/sufficiently-covered?   false
              ::sut/insufficiently-covered? false
-             ::sut/coverage-count          2
-             ::sut/target-coverage-%       50}
+             ::sut/count          2
+             ::sut/target-%       50}
             :ones
             {::sut/sufficiently-covered?   true
              ::sut/insufficiently-covered? false
-             ::sut/coverage-count          4
-             ::sut/target-coverage-%       5}}
+             ::sut/count          4
+             ::sut/target-%       5}}
            {:more-neg
             {::sut/sufficiently-covered?   false
              ::sut/insufficiently-covered? false
-             ::sut/coverage-count          1
-             ::sut/target-coverage-%       10}
+             ::sut/count          1
+             ::sut/target-%       10}
             :less-neg
             {::sut/sufficiently-covered?   false
              ::sut/insufficiently-covered? true
-             ::sut/coverage-count          9
-             ::sut/target-coverage-%       10}}]]
+             ::sut/count          9
+             ::sut/target-%       10}}]]
       (is (= [{:negative
                #:test.check.insights{:coverage 40.0 :target-coverage 50}
                :positive

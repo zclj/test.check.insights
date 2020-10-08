@@ -76,8 +76,7 @@
     (let [q (Math/sqrt (* -2 (Math/log (- 1 p))))]
       (-
        (/ (+ (* (+ (* (+ (* (+ (* (+ (* c1 q) c2) q) c3) q) c4) q) c5) q) c6)
-          (+ (* (+ (* (+ (* (+ (* d1 q) d2) q) d3) q) d4) q) 1)))))
-  )
+          (+ (* (+ (* (+ (* (+ (* d1 q) d2) q) d3) q) d4) q) 1))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -135,7 +134,7 @@
             (fn [arg]
               (apply classify arg))
             args)]
-       (assoc acc k {::coverage-count (count (filter identity classification))})))
+       (assoc acc k {::count (count (filter identity classification))})))
    {}
    coverage-m))
 
@@ -145,10 +144,10 @@
    (fn [acc k {:keys [test.check.insights/cover]}]
      (let [coverage-result
            (check-coverage
-            number-of-tests (get-in coverage [k ::coverage-count]) (/ cover 100))]
+            number-of-tests (get-in coverage [k ::count]) (/ cover 100))]
        (merge
         acc
-        {k (merge (get coverage k) {::target-coverage-% cover} coverage-result)})))
+        {k (merge (get coverage k) {::target-% cover} coverage-result)})))
    {}
    coverage-m))
 
@@ -168,75 +167,26 @@
    (fn [acc coverage-category]
      (let [coverage-result (apply-coverage coverage-category args)
            evaluated-result
-           (evaluate-coverage coverage-category coverage-result (count args))
-           failed (reduce-kv
-                   (fn [acc k v]
-                     (if (not (::sufficiently-covered? v))
-                       (conj acc k)
-                       acc))
-                   []
-                   evaluated-result)]
-       (conj
-        acc
-        (merge coverage-result evaluated-result)
-        ;; (assoc
-        ;;  (merge coverage-result evaluated-result) :test.check.insights/failed failed)
-             )))
+           (evaluate-coverage coverage-category coverage-result (count args))]
+       (conj acc (merge coverage-result evaluated-result))))
    []
    coverage-categories))
 
+;; TODO - common
 (defn ->%
   [nom denom]
   (* 100 (double (/ nom denom))))
 
-;; (defn summerize-coverage
-;;   [coverage-result]
-;;   (let [coverage   (get-in coverage-result [:coverage :coverage])
-;;         test-count (:num-tests coverage-result)]
-;;     (update-in
-;;      coverage-result
-;;      [:coverage :coverage]
-;;      (fn [m]
-;;        (reduce-kv
-;;         (fn [acc k v]
-;;           (merge acc {k (->% v test-count)}))
-;;         {}
-;;         m)))))
-
-;; TODO - add list of failed here instead of in evaluate-coverage
-;; TODO - add final coverage % and expected
-;; (defn humanize-coverage-report
-;;   [coverage-reports]
-;;   (mapv
-;;    (fn [report]
-;;      (let [failed      (reduce-kv
-;;                         (fn [acc k v]
-;;                           (if (not (::sufficiently-covered? v))
-;;                             (conj acc k)
-;;                             acc))
-;;                         []
-;;                         report)
-;;            total-count (reduce + (map ::coverage-count (vals report)))
-;;            new-thingy  (reduce-kv
-;;                         (fn [acc k v]
-;;                           {:actual-% (->% v total-count)})
-;;                         {}
-;;                         (vals report))]
-;;        (merge report {:test.check.insights/failed failed
-;;                       :total-count                total-count
-;;                       :new-thingy                 new-thingy})))
-;;    coverage-reports))
-
 (defn humanize-coverage
   [coverage total-count]
-  {:test.check.insights/coverage (->% (::coverage-count coverage) total-count)
-   :test.check.insights/target-coverage (::target-coverage-% coverage)})
+  {:test.check.insights/coverage (->% (::count coverage) total-count)
+   :test.check.insights/target-coverage (::target-% coverage)})
 
 (defn humanize-coverage-report
   [coverage-reports]
   (mapv
    (fn [report-m]
-     (let [total-count  (reduce + (map ::coverage-count (vals report-m)))
+     (let [total-count  (reduce + (map ::count (vals report-m)))
            failed       (reduce-kv
                          (fn [acc k v]
                            (if (not (::sufficiently-covered? v))
@@ -269,18 +219,4 @@
 
   (humanize-coverage-report coverage-reports)
   )
-;; (defn filter-sufficient
-;;   [eval-result]
-;;   (filterv
-;;    (fn [er]
-;;      (::sufficiently-covered? (val er)))
-;;    eval-result))
-
-;; (defn filter-insufficient
-;;   [eval-result]
-;;   (filterv
-;;    (fn [er]
-;;      (::insufficiently-covered? (val er)))
-;;    eval-result))
-
 

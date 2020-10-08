@@ -19,9 +19,8 @@
   [x]
   (int (Math/pow 2 x)))
 
-;; TODO - adapt to vector for apply and evaluate
 (defn coverage-check
-  [{:keys [::property ::coverage]} n]
+  [n {:keys [::property ::coverage]}]
   (loop [i 0]
     (let [test-count         (* (power-of-2 i) n)
           report-db          (atom [])
@@ -33,16 +32,16 @@
            (fn [m]
              (when (= (:type m) :trial)
                (swap! report-db conj (:args m)))))
-          cv-result          (cv/apply-coverage (first coverage) @report-db)
-          eval-result        (cv/evaluate-coverage (first coverage) cv-result test-count)
+          cv-result          (cv/apply-coverage coverage @report-db)
+          eval-result        (cv/evaluate-coverage coverage cv-result test-count)
           sufficent          (cv/filter-sufficient eval-result)
           all-sufficient?    (= (count sufficent) (count coverage))
           insufficient       (cv/filter-insufficient eval-result)
           some-insufficient? (boolean (seq insufficient))
           report             (-> {}
                                  ;;(assoc :report @report-db)
-                                 (assoc :coverage cv-result)
-                                 (assoc :eval-result eval-result)
+                                 ;;(assoc :counts cv-result)
+                                 (assoc ::cv/evaluated eval-result)
                                  ;;(assoc :sufficient sufficent)
                                  ;;(assoc :all-sufficient? all-sufficient?)
                                  ;;(assoc :insufficient insufficient)
@@ -51,20 +50,23 @@
                                  )]
       ;;(println test-count)
       (cond
-        all-sufficient?      (assoc qc-result :coverage
-                                    (assoc report :status :success))
-        some-insufficient?   (assoc qc-result :coverage
-                                    (-> report
-                                        (assoc :status :failed)
-                                        (assoc :insufficient
-                                               (mapv
-                                                (fn [in]
-                                                  (let [k (first in)]
-                                                    [k (get-in coverage [k :cover])]))
-                                                insufficient))))
+        all-sufficient?    (merge qc-result
+                                  {::coverage
+                                   (assoc report :status :success)})
+        some-insufficient? (merge qc-result
+                                  {:pass? false}
+                                  {::coverage
+                                   (-> report
+                                       (assoc ::cv/status :failed)
+                                       (assoc ::cv/statistically-failed
+                                              (mapv
+                                               (fn [[k coverage]]
+                                                 [k
+                                                  (::cv/target-coverage-% coverage)])
+                                               insufficient)))})
         (> test-count 10000000)
-        (assoc qc-result :coverage (assoc report :status :gave-up))
-        :else                (recur (inc i))))))
+        (assoc qc-result ::coverage (assoc report ::cv/status :gave-up))
+        :else              (recur (inc i))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -72,25 +74,32 @@
 
 (defn check-coverage
   "Run statistical hypothesis check to establish if the given coverage of values produced by a property can be achieved"
-  [{:keys [::property ::coverage]} n])
+  [n {:keys [::property ::coverage]}]
+  (mapv #(coverage-check n {::property property ::coverage %}) coverage))
 
 
 (comment
-  (defn y
-    [& {:keys [a b]}]
-    [a b])
-  
-  (defn x
-    [stuff & opts]
-    (let [{:keys [filter-fn] :or {filter-fn :default}} opts]
-      [(apply y opts) filter-fn]))
+    
+  (def property
+    (for-all
+     {::coverage
+      [{:negative {::classify (fn [x] (< x 0))
+                   ::cover    50}
+        :positive {::classify (fn [x] (>= x 0))
+                   ::cover    50}
+        :ones     {::classify (fn [x] (= x 1))
+                   ::cover    1.2}}
+       {:more-neg {::classify (fn [x] (< x -100))
+                   ::cover    10}
+        :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))
+                   ::cover    10}}]}
+     [x gen/int]
+     (= x x)))
 
-  (apply y (concat '(:a 1 :b 2) [:b 3]))
-  (x 1 :a 3 :b 4 :filter-fn :the-filter)
-  (x 1 :a 3 :b 4)
-
-  (apply str "foo" {:a 1 :b 2})
+  (check-coverage 100 property)
   )
+
+
 
 (defn quick-check
   "Wraps test.check.quick-check with insights. opts are passed to test.check.quick-check so any options supported by quick-check are valid. Note that coverage failure will not fail the tests. If a :reporter-fn is provided it will be called before labels are applied."
@@ -117,10 +126,14 @@
         (assoc ::coverage coverage-result)
         (assoc ::collect collector-result))))
 
+;; TODO: make statistically covered #{}
+;; TODO : ::/coverage -> {:count 4, :target-% 50}
+
 (defn humanize-report
   [{:keys [::labels ::coverage ::collect] :as report}]
   (cond-> report
     labels   (update ::labels lb/humanize-report)
+    ;; TODO - fix name
     coverage (update ::coverage cv/humanize-coverage-report)
     collect  (update ::collect cl/humanize-report)))
   
