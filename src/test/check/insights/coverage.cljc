@@ -182,25 +182,48 @@
   {:test.check.insights/coverage (->% (::count coverage) total-count)
    :test.check.insights/target-coverage (::target-% coverage)})
 
-(defn humanize-coverage-report
+(defn summarize-report
+  [report]
+  (let [total-count  (reduce + (map ::count (vals report)))
+        failed       (reduce-kv
+                      (fn [acc k v]
+                        (if (not (::sufficiently-covered? v))
+                          (conj acc k)
+                          acc))
+                      []
+                      report)
+        human-report (reduce-kv
+                      (fn [acc k coverage]
+                        (assoc acc k (humanize-coverage coverage total-count)))
+                      {}
+                      report)]
+    (if (seq failed)
+      (assoc human-report :test.check.insights/statistically-failed failed)
+      human-report)))
+
+(defn humanize-report
   [coverage-reports]
-  (mapv
-   (fn [report-m]
-     (let [total-count  (reduce + (map ::count (vals report-m)))
-           failed       (reduce-kv
-                         (fn [acc k v]
-                           (if (not (::sufficiently-covered? v))
-                             (conj acc k)
-                             acc))
-                         []
-                         report-m)
-           human-report (reduce-kv
-                         (fn [acc k coverage]
-                           (assoc acc k (humanize-coverage coverage total-count)))
-                         {}
-                         report-m)]
-       (assoc human-report :test.check.insights/statistically-failed failed)))
-   coverage-reports))
+  (if (map? coverage-reports)
+    (summarize-report coverage-reports)
+    (mapv summarize-report coverage-reports))
+    ;; (mapv
+    ;;  (fn [report-m]
+    ;;    (let [total-count  (reduce + (map ::count (vals report-m)))
+    ;;          failed       (reduce-kv
+    ;;                        (fn [acc k v]
+    ;;                          (if (not (::sufficiently-covered? v))
+    ;;                            (conj acc k)
+    ;;                            acc))
+    ;;                        []
+    ;;                        report-m)
+    ;;          human-report (reduce-kv
+    ;;                        (fn [acc k coverage]
+    ;;                          (assoc acc k (humanize-coverage coverage total-count)))
+    ;;                        {}
+    ;;                        report-m)]
+    ;;      (assoc human-report :test.check.insights/statistically-failed failed)))
+    ;;  reports)
+    )
 
 (comment
 
@@ -217,6 +240,6 @@
       :two coverage}
      {:three coverage}])
 
-  (humanize-coverage-report coverage-reports)
+  (humanize-report coverage-reports)
   )
 

@@ -34,40 +34,48 @@
                (swap! report-db conj (:args m)))))
           cv-result          (cv/apply-coverage coverage @report-db)
           eval-result        (cv/evaluate-coverage coverage cv-result test-count)
+          ;; TODOiiiii
           sufficent          (cv/filter-sufficient eval-result)
           all-sufficient?    (= (count sufficent) (count coverage))
           insufficient       (cv/filter-insufficient eval-result)
+          ;; TODO -> bool?
           some-insufficient? (boolean (seq insufficient))
-          report             (-> {}
-                                 ;;(assoc :report @report-db)
-                                 ;;(assoc :counts cv-result)
-                                 (assoc ::cv/evaluated eval-result)
-                                 ;;(assoc :sufficient sufficent)
-                                 ;;(assoc :all-sufficient? all-sufficient?)
-                                 ;;(assoc :insufficient insufficient)
-                                 ;;(assoc :some-insufficient? some-insufficient?)
-                                 ;;(assoc :coverage-report {:test-count test-count})
-                                 )]
+          report             eval-result
+          ;; (-> {}
+          ;;     ;;(assoc :report @report-db)
+          ;;     ;;(assoc :counts cv-result)
+          ;;     (assoc ::cv/evaluated eval-result)
+          ;;     ;;(assoc :sufficient sufficent)
+          ;;     ;;(assoc :all-sufficient? all-sufficient?)
+          ;;     ;;(assoc :insufficient insufficient)
+          ;;     ;;(assoc :some-insufficient? some-insufficient?)
+          ;;     ;;(assoc :coverage-report {:test-count test-count})
+          ;;     )
+          ]
       ;;(println test-count)
+      ;; TODOL all-sufficeient complement some-insiffdf?
       (cond
         all-sufficient?    (merge qc-result
-                                  {::coverage
-                                   (assoc report :status :success)})
+                                  {::coverage report
+                                   ;;[(assoc report :status :success)]
+                                   })
         some-insufficient? (merge qc-result
                                   {:pass? false}
-                                  {::coverage
-                                   (-> report
-                                       (assoc ::cv/status :failed)
-                                       (assoc ::cv/statistically-failed
-                                              (mapv
-                                               (fn [[k coverage]]
-                                                 [k
-                                                  (::cv/target-coverage-% coverage)])
-                                               insufficient)))})
+                                  {::coverage report
+                                   ;; [(-> report (assoc ::cv/status :failed)
+                                   ;;       ;; (assoc ::cv/statistically-failed
+                                   ;;       ;;        (mapv
+                                   ;;       ;;         (fn [[k coverage]]
+                                   ;;       ;;           [k
+                                   ;;       ;;            (::cv/target-% coverage)])
+                                   ;;       ;;         insufficient))
+                                   ;;       )]
+                                   })
         (> test-count 10000000)
         (assoc qc-result ::coverage (assoc report ::cv/status :gave-up))
         :else              (recur (inc i))))))
 
+;; TODO: Is it ok to put check coverage result in vec to better fit reporting or not?
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Public API
@@ -75,7 +83,9 @@
 (defn check-coverage
   "Run statistical hypothesis check to establish if the given coverage of values produced by a property can be achieved"
   [n {:keys [::property ::coverage]}]
-  (mapv #(coverage-check n {::property property ::coverage %}) coverage))
+  (if (= (count coverage) 1)
+    (coverage-check n {::property property ::coverage (first coverage)})
+    (mapv #(coverage-check n {::property property ::coverage %}) coverage)))
 
 
 (comment
@@ -97,6 +107,24 @@
      (= x x)))
 
   (check-coverage 100 property)
+
+  (map humanize-report (check-coverage 100 property))
+
+  (def property-with-one-category
+    (for-all
+     {::coverage
+      [{:negative {::classify (fn [x] (< x 0))
+                   ::cover    50}
+        :positive {::classify (fn [x] (>= x 0))
+                   ::cover    50}
+        :ones     {::classify (fn [x] (= x 1))
+                   ::cover    1.2}}]}
+     [x gen/int]
+     (= x x)))
+
+  (check-coverage 100 property-with-one-category)
+
+  (humanize-report (check-coverage 100 property-with-one-category))
   )
 
 
@@ -127,14 +155,12 @@
         (assoc ::collect collector-result))))
 
 ;; TODO: make statistically covered #{}
-;; TODO : ::/coverage -> {:count 4, :target-% 50}
 
 (defn humanize-report
   [{:keys [::labels ::coverage ::collect] :as report}]
   (cond-> report
     labels   (update ::labels lb/humanize-report)
-    ;; TODO - fix name
-    coverage (update ::coverage cv/humanize-coverage-report)
+    coverage (update ::coverage cv/humanize-report)
     collect  (update ::collect cl/humanize-report)))
   
 

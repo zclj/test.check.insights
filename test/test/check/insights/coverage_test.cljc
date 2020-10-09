@@ -120,28 +120,28 @@
           [{:negative
             {::sut/sufficiently-covered?   true
              ::sut/insufficiently-covered? false
-             ::sut/count          4
-             ::sut/target-%       50}
+             ::sut/count                   4
+             ::sut/target-%                50}
             :positive
             {::sut/sufficiently-covered?   false
              ::sut/insufficiently-covered? false
-             ::sut/count          2
-             ::sut/target-%       50}
+             ::sut/count                   2
+             ::sut/target-%                50}
             :ones
             {::sut/sufficiently-covered?   true
              ::sut/insufficiently-covered? false
-             ::sut/count          4
-             ::sut/target-%       5}}
+             ::sut/count                   4
+             ::sut/target-%                5}}
            {:more-neg
             {::sut/sufficiently-covered?   false
              ::sut/insufficiently-covered? false
-             ::sut/count          1
-             ::sut/target-%       10}
+             ::sut/count                   1
+             ::sut/target-%                10}
             :less-neg
             {::sut/sufficiently-covered?   false
              ::sut/insufficiently-covered? true
-             ::sut/count          9
-             ::sut/target-%       10}}]]
+             ::sut/count                   9
+             ::sut/target-%                10}}]]
       (is (= [{:negative
                #:test.check.insights{:coverage 40.0 :target-coverage 50}
                :positive
@@ -154,8 +154,42 @@
                :less-neg
                #:test.check.insights{:coverage 90.0 :target-coverage 10}
                :test.check.insights/statistically-failed [:more-neg :less-neg]}] 
-             (sut/humanize-coverage-report coverage-report))))))
+             (sut/humanize-report coverage-report)))))
+  (testing "failed should only be included if coverage actually failed"
+    (is (= {:negative
+            #:test.check.insights{:coverage 100.0 :target-coverage 50}}
+           (sut/humanize-report
+            {:negative
+             {::sut/sufficiently-covered?   true
+              ::sut/insufficiently-covered? false
+              ::sut/count                   4
+              ::sut/target-%                50}})))))
 
+(deftest humanize-report-should-handle-map-or-vec
+  (let [coverage-report
+        {:negative
+         {::sut/sufficiently-covered?   true
+          ::sut/insufficiently-covered? false
+          ::sut/count                   4
+          ::sut/target-%                50}
+         :positive
+         {::sut/sufficiently-covered?   false
+          ::sut/insufficiently-covered? false
+          ::sut/count                   2
+          ::sut/target-%                50}
+         :ones
+         {::sut/sufficiently-covered?   true
+          ::sut/insufficiently-covered? false
+          ::sut/count                   4
+          ::sut/target-%                5}}]
+    (is (= {:negative
+            #:test.check.insights{:coverage 40.0 :target-coverage 50}
+            :positive
+            #:test.check.insights{:coverage 20.0 :target-coverage 50}
+            :ones
+            #:test.check.insights{:coverage 40.0 :target-coverage 5}
+            :test.check.insights/statistically-failed [:positive]}
+           (sut/humanize-report coverage-report)))))
 
 
 ;; Make sure constants are not changed by mistake
