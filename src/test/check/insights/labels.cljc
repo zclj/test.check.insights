@@ -38,6 +38,9 @@
       (:test.check.insights/label-classifications label-category)))
    label-categories))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Reporting
+
 (defn ->%
   [nom denom]
   (* 100 (double (/ nom denom))))

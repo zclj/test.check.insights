@@ -1,26 +1,9 @@
 (ns test.check.insights.coverage)
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Resources
-
-;; https://github.com/nick8325/quickcheck/blob/09a569db8de0df14f8514b30d4bfe7acb41f9c41/src/Test/QuickCheck/State.hs#L63
-
-;; https://github.com/nick8325/quickcheck/blob/09a569db8de0df14f8514b30d4bfe7acb41f9c41/src/Test/QuickCheck/Test.hs#L579
-
-;; https://github.com/nick8325/quickcheck/blob/09a569db8de0df14f8514b30d4bfe7acb41f9c41/src/Test/QuickCheck/Property.hs#L499
-
-;; DO NOT COUNT DISCARDED TEST AGAINST COVERAGE
-;; https://hackage.haskell.org/package/QuickCheck-2.13.2/docs/Test-QuickCheck.html#v:checkCoverage
-;; When you use checkCoverage, QuickCheck uses a statistical test to account for the role of luck in coverage failures. It will run as many tests as needed until it is sure about whether the coverage requirements are met. If a coverage requirement is not met, the property fails.
-;; just using coverage show the stats, checkCoverage will fail it
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO - java.lang.Math -> JS
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inverse normal cumulative distribution function (same as QuickCheck)
+
+;; https://github.com/nick8325/quickcheck/blob/09a569db8de0df14f8514b30d4bfe7acb41f9c41/src/Test/QuickCheck/Test.hs#L606
 
 ;; Algorithm taken from
 ;; https://web.archive.org/web/20151110174102/http://home.online.no/~pjacklam/notes/invnorm/
@@ -79,6 +62,7 @@
           (+ (* (+ (* (+ (* (+ (* d1 q) d2) q) d3) q) d4) q) 1))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Wilson scoring
 
 (defn wilson
   [k n z]
@@ -115,6 +99,9 @@
 (def default-confidence
   {:certainty 1.0E9
    :tolerance 0.9})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Coverage checks
 
 (defn check-coverage
   ([tests-n class-n p]
@@ -161,6 +148,9 @@
 (def filter-sufficient (partial filter-k ::sufficiently-covered?))
 (def filter-insufficient (partial filter-k ::insufficiently-covered?))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Reporting
+
 (defn report-coverage
   [coverage-categories args]
   (reduce
@@ -172,7 +162,6 @@
    []
    coverage-categories))
 
-;; TODO - common
 (defn ->%
   [nom denom]
   (* 100 (double (/ nom denom))))
@@ -205,25 +194,7 @@
   [coverage-reports]
   (if (map? coverage-reports)
     (summarize-report coverage-reports)
-    (mapv summarize-report coverage-reports))
-    ;; (mapv
-    ;;  (fn [report-m]
-    ;;    (let [total-count  (reduce + (map ::count (vals report-m)))
-    ;;          failed       (reduce-kv
-    ;;                        (fn [acc k v]
-    ;;                          (if (not (::sufficiently-covered? v))
-    ;;                            (conj acc k)
-    ;;                            acc))
-    ;;                        []
-    ;;                        report-m)
-    ;;          human-report (reduce-kv
-    ;;                        (fn [acc k coverage]
-    ;;                          (assoc acc k (humanize-coverage coverage total-count)))
-    ;;                        {}
-    ;;                        report-m)]
-    ;;      (assoc human-report :test.check.insights/statistically-failed failed)))
-    ;;  reports)
-    )
+    (mapv summarize-report coverage-reports)))
 
 (comment
 

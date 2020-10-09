@@ -40,42 +40,18 @@
           insufficient       (cv/filter-insufficient eval-result)
           ;; TODO -> bool?
           some-insufficient? (boolean (seq insufficient))
-          report             eval-result
-          ;; (-> {}
-          ;;     ;;(assoc :report @report-db)
-          ;;     ;;(assoc :counts cv-result)
-          ;;     (assoc ::cv/evaluated eval-result)
-          ;;     ;;(assoc :sufficient sufficent)
-          ;;     ;;(assoc :all-sufficient? all-sufficient?)
-          ;;     ;;(assoc :insufficient insufficient)
-          ;;     ;;(assoc :some-insufficient? some-insufficient?)
-          ;;     ;;(assoc :coverage-report {:test-count test-count})
-          ;;     )
-          ]
-      ;;(println test-count)
+          report             eval-result]
+
       ;; TODOL all-sufficeient complement some-insiffdf?
       (cond
         all-sufficient?    (merge qc-result
-                                  {::coverage report
-                                   ;;[(assoc report :status :success)]
-                                   })
+                                  {::coverage report})
         some-insufficient? (merge qc-result
                                   {:pass? false}
-                                  {::coverage report
-                                   ;; [(-> report (assoc ::cv/status :failed)
-                                   ;;       ;; (assoc ::cv/statistically-failed
-                                   ;;       ;;        (mapv
-                                   ;;       ;;         (fn [[k coverage]]
-                                   ;;       ;;           [k
-                                   ;;       ;;            (::cv/target-% coverage)])
-                                   ;;       ;;         insufficient))
-                                   ;;       )]
-                                   })
+                                  {::coverage report})
         (> test-count 10000000)
         (assoc qc-result ::coverage (assoc report ::cv/status :gave-up))
         :else              (recur (inc i))))))
-
-;; TODO: Is it ok to put check coverage result in vec to better fit reporting or not?
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Public API
