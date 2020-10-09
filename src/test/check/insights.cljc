@@ -39,16 +39,13 @@
           all-sufficient?    (= (count sufficent) (count coverage))
           insufficient       (cv/filter-insufficient eval-result)
           ;; TODO -> bool?
-          some-insufficient? (boolean (seq insufficient))
+          some-insufficient? (seq insufficient)
           report             eval-result]
 
       ;; TODOL all-sufficeient complement some-insiffdf?
       (cond
-        all-sufficient?    (merge qc-result
-                                  {::coverage report})
-        some-insufficient? (merge qc-result
-                                  {:pass? false}
-                                  {::coverage report})
+        all-sufficient?    (merge qc-result {:pass? true ::coverage report})
+        some-insufficient? (merge qc-result {:pass? false ::coverage report})
         (> test-count 10000000)
         (assoc qc-result ::coverage (assoc report ::cv/status :gave-up))
         :else              (recur (inc i))))))

@@ -3,6 +3,9 @@
             [test.check.insights :as sut]
             [clojure.test.check.generators :as gen]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setup
+
 (def property
   (sut/for-all
    {:test.check.insights/coverage
@@ -30,26 +33,69 @@
 (declare expected-test-result)
 (declare expected-humanized-report)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Tests
+
 (deftest quick-check
-  (is (= expected-test-result
-         (select-keys
-          (sut/quick-check 10 property :seed 1)
-          [::sut/labels
-           ::sut/coverage
-           ::sut/collect]))))
+  (testing "quick-check should produce data for labels, coverage, and collect"
+    (is (= expected-test-result
+           (select-keys
+            (sut/quick-check 10 property :seed 1)
+            [::sut/labels
+             ::sut/coverage
+             ::sut/collect])))))
 
 (deftest humanize-report
-  (is (= expected-humanized-report
-         (sut/humanize-report expected-test-result))))
+  (testing "reports should be humanized"
+    (is (= expected-humanized-report
+           (sut/humanize-report expected-test-result)))))
 
+(deftest coverage-check
+  (testing
+      "check-coverage should run as many tests as need to verify if coverage can be met"
+    (let [result
+          (sut/check-coverage
+           100
+           (sut/for-all
+            {:test.check.insights/coverage
+             [{:negative {:test.check.insights/classify (fn [x] (< x 0))
+                          :test.check.insights/cover    30}
+               :positive {:test.check.insights/classify (fn [x] (>= x 0))
+                          :test.check.insights/cover    30}}]}
+            [x gen/int]
+            (= x x)))]
+      (is (:pass? result))
+      (is (map? result))))
+  (testing "fails when coverage can not be satisfied"
+    (let [result
+          (sut/check-coverage
+           100
+           (sut/for-all
+            {:test.check.insights/coverage
+             [{:negative {:test.check.insights/classify (fn [x] (< x 0))
+                          :test.check.insights/cover    80}}]}
+            [x gen/int]
+            (= x x)))]
+      (is (not (:pass? result)))))
+  (testing "multiple coverage categories return vector of results"
+    (let [result
+          (sut/check-coverage
+           100
+           (sut/for-all
+            {:test.check.insights/coverage
+             [{:negative {:test.check.insights/classify (fn [x] (< x 0))
+                          :test.check.insights/cover    80}}
+              {:negative2 {:test.check.insights/classify (fn [x] (< x 0))
+                           :test.check.insights/cover    80}}]}
+            [x gen/int]
+            (= x x)))]
+      (is (vector? result)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Test data
 
 (def expected-test-result
-  {:result          true
-   :pass?           true
-   :num-tests       10
-   :time-elapsed-ms 1
-   :seed            1,
-   :test.check.insights/labels
+  {:test.check.insights/labels
    [{:test.check.insights/labled
      [[0] [0] [-2] [-2] [3] [0] [-3] [-2] [2] [2]],
      :test.check.insights/unlabled #{}
@@ -99,12 +145,7 @@
      2  [[2] [2]]}]})
 
 (def expected-humanized-report
-  {:result          true,	  
-   :pass?           true,
-   :num-tests       10,
-   :time-elapsed-ms 1,
-   :seed            1,
-   :test.check.insights/labels
+  {:test.check.insights/labels
    [{:negative 40.0, :positive 60.0, :ones 0.0}
     {:more-neg 0.0, :less-neg 100.0}],
    :test.check.insights/coverage
