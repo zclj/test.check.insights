@@ -20,45 +20,44 @@
   (int (Math/pow 2 x)))
 
 (defn coverage-check
-  [n {:keys [::property ::coverage]}]
+  [n {:keys [::property ::coverage]} max-number-of-tests]
   (loop [i 0]
-    (let [test-count         (* (power-of-2 i) n)
-          report-db          (atom [])
-          qc-result
-          (tc/quick-check
-           test-count
-           property
-           :reporter-fn
-           (fn [m]
-             (when (= (:type m) :trial)
-               (swap! report-db conj (:args m)))))
-          cv-result          (cv/apply-coverage coverage @report-db)
-          eval-result        (cv/evaluate-coverage coverage cv-result test-count)
-          ;; TODOiiiii
-          sufficent          (cv/filter-sufficient eval-result)
-          all-sufficient?    (= (count sufficent) (count coverage))
-          insufficient       (cv/filter-insufficient eval-result)
-          ;; TODO -> bool?
-          some-insufficient? (seq insufficient)
-          report             eval-result]
-
-      ;; TODOL all-sufficeient complement some-insiffdf?
+    (let [test-count      (* (power-of-2 i) n)
+          report-db       (atom [])
+          qc-result       (tc/quick-check
+                           test-count
+                           property
+                           :reporter-fn
+                           (fn [m]
+                             (when (= (:type m) :trial)
+                               (swap! report-db conj (:args m)))))
+          cv-result       (cv/apply-coverage coverage @report-db)
+          eval-result     (cv/evaluate-coverage coverage cv-result test-count)
+          sufficient      (cv/filter-sufficient eval-result)
+          all-sufficient? (= (count sufficient) (count coverage))
+          insufficient    (cv/filter-insufficient eval-result)
+          check-report    (assoc qc-result ::coverage eval-result)]
       (cond
-        all-sufficient?    (merge qc-result {:pass? true ::coverage report})
-        some-insufficient? (merge qc-result {:pass? false ::coverage report})
-        (> test-count 10000000)
-        (assoc qc-result ::coverage (assoc report ::cv/status :gave-up))
-        :else              (recur (inc i))))))
+        all-sufficient?                    (assoc check-report :pass? true)
+        (seq insufficient)                 (assoc check-report :pass? false)
+        (> test-count max-number-of-tests) (assoc check-report ::cv/status :gave-up)
+        :else                              (recur (inc i))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Public API
 
 (defn check-coverage
   "Run statistical hypothesis check to establish if the given coverage of values produced by a property can be achieved"
-  [n {:keys [::property ::coverage]}]
-  (if (= (count coverage) 1)
-    (coverage-check n {::property property ::coverage (first coverage)})
-    (mapv #(coverage-check n {::property property ::coverage %}) coverage)))
+  [n {:keys [::property ::coverage]} & opts]
+  (let [{:keys [max-number-of-tests]
+         :or   {max-number-of-tests 10000000}}
+        opts]
+    (if (= (count coverage) 1)
+      (coverage-check
+       n {::property property ::coverage (first coverage)} max-number-of-tests)
+      (mapv
+       #(coverage-check n {::property property ::coverage %} max-number-of-tests)
+       coverage))))
 
 
 (comment
