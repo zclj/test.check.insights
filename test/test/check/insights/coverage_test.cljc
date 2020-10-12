@@ -156,40 +156,14 @@
                :test.check.insights/statistically-failed [:more-neg :less-neg]}] 
              (sut/humanize-report coverage-report)))))
   (testing "failed should only be included if coverage actually failed"
-    (is (= {:negative
-            #:test.check.insights{:coverage 100.0 :target-coverage 50}}
+    (is (= [{:negative
+             #:test.check.insights{:coverage 100.0 :target-coverage 50}}]
            (sut/humanize-report
-            {:negative
-             {::sut/sufficiently-covered?   true
-              ::sut/insufficiently-covered? false
-              ::sut/count                   4
-              ::sut/target-%                50}})))))
-
-(deftest humanize-report-should-handle-map-or-vec
-  (let [coverage-report
-        {:negative
-         {::sut/sufficiently-covered?   true
-          ::sut/insufficiently-covered? false
-          ::sut/count                   4
-          ::sut/target-%                50}
-         :positive
-         {::sut/sufficiently-covered?   false
-          ::sut/insufficiently-covered? false
-          ::sut/count                   2
-          ::sut/target-%                50}
-         :ones
-         {::sut/sufficiently-covered?   true
-          ::sut/insufficiently-covered? false
-          ::sut/count                   4
-          ::sut/target-%                5}}]
-    (is (= {:negative
-            #:test.check.insights{:coverage 40.0 :target-coverage 50}
-            :positive
-            #:test.check.insights{:coverage 20.0 :target-coverage 50}
-            :ones
-            #:test.check.insights{:coverage 40.0 :target-coverage 5}
-            :test.check.insights/statistically-failed [:positive]}
-           (sut/humanize-report coverage-report)))))
+            [{:negative
+              {::sut/sufficiently-covered?   true
+               ::sut/insufficiently-covered? false
+               ::sut/count                   4
+               ::sut/target-%                50}}])))))
 
 
 ;; Make sure constants are not changed by mistake

@@ -192,9 +192,9 @@
 
 (defn humanize-report
   [coverage-reports]
-  (if (map? coverage-reports)
-    (summarize-report coverage-reports)
-    (mapv summarize-report coverage-reports)))
+;;  (if (map? coverage-reports))
+  ;;(summarize-report coverage-reports)
+  (mapv summarize-report coverage-reports))
 
 (comment
 

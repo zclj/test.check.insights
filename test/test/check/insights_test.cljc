@@ -64,8 +64,7 @@
                           :test.check.insights/cover    30}}]}
             [x gen/int]
             (= x x)))]
-      (is (:pass? result))
-      (is (map? result))))
+      (is (:pass? (first result)))))
   (testing "fails when coverage can not be satisfied"
     (let [result
           (sut/check-coverage

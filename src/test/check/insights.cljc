@@ -52,13 +52,9 @@
   (let [{:keys [max-number-of-tests]
          :or   {max-number-of-tests 10000000}}
         opts]
-    (if (= (count coverage) 1)
-      (coverage-check
-       n {::property property ::coverage (first coverage)} max-number-of-tests)
-      (mapv
-       #(coverage-check n {::property property ::coverage %} max-number-of-tests)
-       coverage))))
-
+    (mapv
+     #(coverage-check n {::property property ::coverage %} max-number-of-tests)
+       coverage)))
 
 (comment
     
@@ -126,8 +122,6 @@
         (assoc ::coverage coverage-result)
         (assoc ::collect collector-result))))
 
-;; TODO: make statistically covered #{}
-
 (defn humanize-report
   [{:keys [::labels ::coverage ::collect] :as report}]
   (cond-> report
@@ -174,4 +168,45 @@
    :reporter-filter-fn (fn [m] (println "I'm a FILTER") (= (:type m) :trial)))
 
   (humanize-report (quick-check 10 property))
+  )
+
+(comment
+  (def property-with-labels
+    (for-all
+     {::labels
+      [{:negative {::classify (fn [x] (< x 0))}
+        :positive {::classify (fn [x] (>= x 0))}
+        :ones     {::classify (fn [x] (= 1 x))}}
+       {:more-neg {::classify (fn [x] (< x -100))}
+        :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))}}]}
+     [x gen/int]
+     (= x x)))
+
+  (quick-check 10 property-with-labels :seed 1)
+
+  (def property-with-coverage
+    (for-all
+     {::coverage
+      [{:negative {::classify (fn [x] (< x 0))
+                   ::cover    50}
+        :positive {::classify (fn [x] (>= x 0))
+                   ::cover    50}
+        :ones     {::classify (fn [x] (= x 1))
+                   ::cover    1.2}}
+       {:more-neg {::classify (fn [x] (< x -100))
+                   ::cover    10}
+        :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))
+                   ::cover    10}}]}
+     [x gen/int]
+     (= x x)))
+
+  (quick-check 10 property-with-coverage :seed 1)
+
+  (def property-with-collect
+    (for-all
+     {::collect [{::collector (fn [x] (identity x))}]}
+     [x gen/int]
+     (= x x)))
+
+  (quick-check 10 property-with-collect :seed 1)
   )
