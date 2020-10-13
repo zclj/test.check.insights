@@ -12,7 +12,7 @@ Get insights into your test.check generators by the use of labeling, classificat
 {:deps
  {zclj/test.check.insights
   {:git/url "https://github.com/zclj/test.check.insights.git"
-   :sha     ""}}}
+   :sha     "5d7c00873d0ecf5a4344a9659aeca842dd6d9fb5"}}}
 ```
 
 ### lein
