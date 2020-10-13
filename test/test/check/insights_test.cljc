@@ -95,45 +95,45 @@
 
 (def expected-test-result
   {:test.check.insights/labels
-   [{:test.check.insights/labled
+   [{:test.check.insights/labeled
      [[0] [0] [-2] [-2] [3] [0] [-3] [-2] [2] [2]],
-     :test.check.insights/unlabled #{}
-     :negative                     [[-2] [-2] [-3] [-2]]
-     :positive                     [[0] [0] [3] [0] [2] [2]]
-     :ones                         []}
-    {:test.check.insights/labled   [[-2] [-2] [-3] [-2]],
-     :test.check.insights/unlabled #{[3] [0] [2]},
-     :more-neg                     []
-     :less-neg                     [[-2] [-2] [-3] [-2]]}]
+     :test.check.insights/unlabeled #{}
+     :negative                      [[-2] [-2] [-3] [-2]]
+     :positive                      [[0] [0] [3] [0] [2] [2]]
+     :ones                          []}
+    {:test.check.insights/labeled   [[-2] [-2] [-3] [-2]],
+     :test.check.insights/unlabeled #{[3] [0] [2]},
+     :more-neg                      []
+     :less-neg                      [[-2] [-2] [-3] [-2]]}]
    :test.check.insights/coverage
    [{:negative
      #:test.check.insights.coverage
-     {:count          4
-      :target-%       50
+     {:count                   4
+      :target-%                50
       :sufficiently-covered?   false
       :insufficiently-covered? false}
      :positive
      #:test.check.insights.coverage
-     {:count          6
-      :target-%       50
+     {:count                   6
+      :target-%                50
       :sufficiently-covered?   false
       :insufficiently-covered? false}
      :ones
      #:test.check.insights.coverage
-     {:count          0
-      :target-%       1.2
+     {:count                   0
+      :target-%                1.2
       :sufficiently-covered?   false
       :insufficiently-covered? false}}
     {:more-neg
      #:test.check.insights.coverage
-     {:count          0
-      :target-%       10
+     {:count                   0
+      :target-%                10
       :sufficiently-covered?   false
       :insufficiently-covered? false}
      :less-neg
      #:test.check.insights.coverage
-     {:count          4
-      :target-%       10
+     {:count                   4
+      :target-%                10
       :sufficiently-covered?   false
       :insufficiently-covered? false}}]
    :test.check.insights/collect
@@ -153,11 +153,10 @@
      :positive
      #:test.check.insights{:coverage 60.0, :target-coverage 50},
      :ones #:test.check.insights{:coverage 0.0, :target-coverage 1.2},
-     :test.check.insights/statistically-failed
-     [:negative :positive :ones]}
-    {:more-neg                                 #:test.check.insights{:coverage 0.0, :target-coverage 10},
+     :test.check.insights/statistically-failed #{:negative :positive :ones}}
+    {:more-neg  #:test.check.insights{:coverage 0.0, :target-coverage 10},
      :less-neg
      #:test.check.insights{:coverage 100.0, :target-coverage 10},
-     :test.check.insights/statistically-failed [:more-neg :less-neg]}],
+     :test.check.insights/statistically-failed #{:more-neg :less-neg}}],
    :test.check.insights/collect
    [{0 30.0, -2 30.0, 3 10.0, -3 10.0, 2 20.0}]})

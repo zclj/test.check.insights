@@ -40,7 +40,10 @@
       (cond
         all-sufficient?                    (assoc check-report :pass? true)
         (seq insufficient)                 (assoc check-report :pass? false)
-        (> test-count max-number-of-tests) (assoc check-report ::cv/status :gave-up)
+        (> test-count max-number-of-tests) (merge
+                                            check-report
+                                            {::cv/status :gave-up
+                                             :pass?      false})
         :else                              (recur (inc i))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -55,47 +58,6 @@
     (mapv
      #(coverage-check n {::property property ::coverage %} max-number-of-tests)
        coverage)))
-
-(comment
-    
-  (def property
-    (for-all
-     {::coverage
-      [{:negative {::classify (fn [x] (< x 0))
-                   ::cover    50}
-        :positive {::classify (fn [x] (>= x 0))
-                   ::cover    50}
-        :ones     {::classify (fn [x] (= x 1))
-                   ::cover    1.2}}
-       {:more-neg {::classify (fn [x] (< x -100))
-                   ::cover    10}
-        :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))
-                   ::cover    10}}]}
-     [x gen/int]
-     (= x x)))
-
-  (check-coverage 100 property)
-
-  (map humanize-report (check-coverage 100 property))
-
-  (def property-with-one-category
-    (for-all
-     {::coverage
-      [{:negative {::classify (fn [x] (< x 0))
-                   ::cover    50}
-        :positive {::classify (fn [x] (>= x 0))
-                   ::cover    50}
-        :ones     {::classify (fn [x] (= x 1))
-                   ::cover    1.2}}]}
-     [x gen/int]
-     (= x x)))
-
-  (check-coverage 100 property-with-one-category)
-
-  (humanize-report (check-coverage 100 property-with-one-category))
-  )
-
-
 
 (defn quick-check
   "Wraps test.check.quick-check with insights. opts are passed to test.check.quick-check so any options supported by quick-check are valid. Note that coverage failure will not fail the tests. If a :reporter-fn is provided it will be called before labels are applied."
@@ -228,5 +190,7 @@
      (= x x)))
 
   (check-coverage 100 property-with-far-off-coverage)
+
+  (check-coverage 100 property-with-coverage :max-number-of-tests 1)
   
   )

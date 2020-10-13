@@ -37,7 +37,7 @@ In general, all library specific keys are namespaced.
       :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))}}]
     ::collect [{::collector (fn [x] (identity x))}]}
    [x gen/int]
-   (= (inc x) (sut x))))
+   (= x x)))
 
 ;; check the property
 (tci/quick-check 100 property)
@@ -77,19 +77,19 @@ The result is merged with the test.check result:
  :time-elapsed-ms 0,
  :seed 1,
  :test.check.insights/labels
- [{:test.check.insights/labled
+ [{:test.check.insights/labeled
    [[0] [0] [-2] [-2] [3] [0] [-3] [-2] [2] [2]],
-   :test.check.insights/unlabled #{},
+   :test.check.insights/unlabeled #{},
    :negative [[-2] [-2] [-3] [-2]],
    :positive [[0] [0] [3] [0] [2] [2]],
    :ones []}
-  {:test.check.insights/labled [[-2] [-2] [-3] [-2]],
-   :test.check.insights/unlabled #{[3] [0] [2]},
+  {:test.check.insights/labeled [[-2] [-2] [-3] [-2]],
+   :test.check.insights/unlabeled #{[3] [0] [2]},
    :more-neg [],
    :less-neg [[-2] [-2] [-3] [-2]]}]}
 ```
 
-Each labeled value is included in its label. `::labeled` include all labeled values, once for each predicate match. `::unlabled` contains any values that did not match a label classification.
+Each labeled value is included in its label. `::labeled` include all labeled values, once for each predicate match. `::unlabeled` contains any values that did not match a label classification.
 
 The result can be humanized :
 
@@ -187,12 +187,12 @@ The result can be humanized, which show the coverage statistics as percentages a
    #:test.check.insights{:coverage 60.0, :target-coverage 50},
    :ones #:test.check.insights{:coverage 0.0, :target-coverage 1.2},
    :test.check.insights/statistically-failed
-   [:negative :positive :ones]}
+   #{:negative :positive :ones}
   {:more-neg
    #:test.check.insights{:coverage 0.0, :target-coverage 10},
    :less-neg
    #:test.check.insights{:coverage 100.0, :target-coverage 10},
-   :test.check.insights/statistically-failed [:more-neg :less-neg]}]}
+   :test.check.insights/statistically-failed #{:more-neg :less-neg}}]}
 ```
 
 ### Collect
@@ -380,33 +380,89 @@ Only the initial 100 test are required to reach `:insufficiently-covered? true` 
 Since the output from `check-coverage` is the same as from `quick-check` with regards to coverage, `humanize-report` can be used:
 
 ```clj
-(tci/humanize-report 
+(mapv
+ tci/humanize-report
  (tci/check-coverage 100 property-with-far-off-coverage))
+;;=>
+[{:result true,
+  :pass? true,
+  :num-tests 102400,
+  :time-elapsed-ms 209,
+  :seed 1602583299465,
+  :test.check.insights/coverage
+  {:negative
+   #:test.check.insights{:coverage 48.4031378293468,
+                         :target-coverage 50},
+   :positive
+   #:test.check.insights{:coverage 50.2804386793362,
+                         :target-coverage 50},
+   :ones
+   #:test.check.insights{:coverage 1.316423491317002,
+                         :target-coverage 1.2}}}
+ {:result true,
+  :pass? false,
+  :num-tests 6400,
+  :time-elapsed-ms 13,
+  :seed 1602583299726,
+  :test.check.insights/coverage
+  {:more-neg
+   #:test.check.insights{:coverage 15.86319218241042,
+                         :target-coverage 10},
+   :less-neg
+   #:test.check.insights{:coverage 84.13680781758957,
+                         :target-coverage 10},
+   :test.check.insights/statistically-failed #{:more-neg}}}]
+```
+
+This will display the percentages instead of counts. Note that the percentages of `:negative` is on target but the `:sufficiently-covered?` is still `false`. This is due to that significance have not been reached with this number of tests.
+
+Finally, there is one more way the coverage check can fail and that is if the max number of allowed tests are reached before reaching a conclusion.  
+
+```clj
+(tci/check-coverage 100 property-with-coverage :max-number-of-tests 1)
 ;;=>
 [{:result true,
   :pass? false,
   :num-tests 100,
-  :time-elapsed-ms 3,
-  :seed 1602575661765,
+  :time-elapsed-ms 1,
+  :seed 1602583744482,
   :test.check.insights/coverage
   {:negative
-   #:test.check.insights.coverage{:count 51,
+   #:test.check.insights.coverage{:count 42,
                                   :target-% 50,
                                   :sufficiently-covered? false,
                                   :insufficiently-covered? false},
    :positive
-   #:test.check.insights.coverage{:count 49,
+   #:test.check.insights.coverage{:count 58,
                                   :target-% 50,
                                   :sufficiently-covered? false,
                                   :insufficiently-covered? false},
    :ones
-   #:test.check.insights.coverage{:count 2,
-                                  :target-% 50,
+   #:test.check.insights.coverage{:count 4,
+                                  :target-% 1.2,
                                   :sufficiently-covered? false,
-                                  :insufficiently-covered? true}}}]
+                                  :insufficiently-covered? false}},
+  :test.check.insights.coverage/status :gave-up}
+ {:result true,
+  :pass? false,
+  :num-tests 100,
+  :time-elapsed-ms 0,
+  :seed 1602583744483,
+  :test.check.insights/coverage
+  {:more-neg
+   #:test.check.insights.coverage{:count 0,
+                                  :target-% 10,
+                                  :sufficiently-covered? false,
+                                  :insufficiently-covered? false},
+   :less-neg
+   #:test.check.insights.coverage{:count 58,
+                                  :target-% 10,
+                                  :sufficiently-covered? true,
+                                  :insufficiently-covered? false}},
+  :test.check.insights.coverage/status :gave-up}]
 ```
 
-This will display the percentages instead of counts. Note that the percentages of `:negative` is on target but the `:sufficiently-covered?` is still `false`. This is due to that significance have not been reached with this number of tests.
+Reaching the limit will set the `:pass?` to `false` and include the status of `:gave-up`. The default value of `:max-number-of-tests` is set to 10000000, witch I pulled out of my hat, so let me know if you have another suggestion.
 
 ### Algorithms used
 

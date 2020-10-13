@@ -148,12 +148,12 @@
                #:test.check.insights{:coverage 20.0 :target-coverage 50}
                :ones
                #:test.check.insights{:coverage 40.0 :target-coverage 5}
-               :test.check.insights/statistically-failed [:positive]}
+               :test.check.insights/statistically-failed #{:positive}}
               {:more-neg
                #:test.check.insights{:coverage 10.0 :target-coverage 10}
                :less-neg
                #:test.check.insights{:coverage 90.0 :target-coverage 10}
-               :test.check.insights/statistically-failed [:more-neg :less-neg]}] 
+               :test.check.insights/statistically-failed #{:more-neg :less-neg}}] 
              (sut/humanize-report coverage-report)))))
   (testing "failed should only be included if coverage actually failed"
     (is (= [{:negative

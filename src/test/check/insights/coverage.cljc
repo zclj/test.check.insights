@@ -179,7 +179,7 @@
                         (if (not (::sufficiently-covered? v))
                           (conj acc k)
                           acc))
-                      []
+                      #{}
                       report)
         human-report (reduce-kv
                       (fn [acc k coverage]
@@ -192,9 +192,9 @@
 
 (defn humanize-report
   [coverage-reports]
-;;  (if (map? coverage-reports))
-  ;;(summarize-report coverage-reports)
-  (mapv summarize-report coverage-reports))
+  (if (map? coverage-reports)
+    (summarize-report coverage-reports)
+    (mapv summarize-report coverage-reports)))
 
 (comment
 

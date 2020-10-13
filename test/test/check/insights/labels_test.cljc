@@ -14,17 +14,17 @@
                       (fn [x] (and (> x -100) (< x 0)))}}]
       (is (= [{:test.check.insights/label-classifications label-classifications-category-1
                :test.check.insights/labels
-               {:test.check.insights/labled   []
-                :test.check.insights/unlabled #{}
-                :negative                     []
-                :positive                     []
-                :ones                         []}}
+               {:test.check.insights/labeled   []
+                :test.check.insights/unlabeled #{}
+                :negative                      []
+                :positive                      []
+                :ones                          []}}
               {:test.check.insights/label-classifications label-classifications-category-2
                :test.check.insights/labels
-               {:test.check.insights/labled   []
-                :test.check.insights/unlabled #{}
-                :more-neg                     []
-                :less-neg                     []}}]
+               {:test.check.insights/labeled   []
+                :test.check.insights/unlabeled #{}
+                :more-neg                      []
+                :less-neg                      []}}]
              (sut/init-labels
               [label-classifications-category-1
                label-classifications-category-2]))))))
@@ -42,33 +42,33 @@
           labels [{:test.check.insights/label-classifications
                    label-classifications-category-1
                    :test.check.insights/labels
-                   {:test.check.insights/labled   [[0] [-1]]
-                    :test.check.insights/unlabled #{["a"]}
-                    :negative                     [[-1]]
-                    :positive                     [[0]]
-                    :ones                         []}}
+                   {:test.check.insights/labeled   [[0] [-1]]
+                    :test.check.insights/unlabeled #{["a"]}
+                    :negative                      [[-1]]
+                    :positive                      [[0]]
+                    :ones                          []}}
                   {:test.check.insights/label-classifications
                    label-classifications-category-2
                    :test.check.insights/labels
-                   {:test.check.insights/labled   []
-                    :test.check.insights/unlabled #{}
-                    :more-neg                     []
-                    :less-neg                     []}}]]
+                   {:test.check.insights/labeled   []
+                    :test.check.insights/unlabeled #{}
+                    :more-neg                      []
+                    :less-neg                      []}}]]
       (is (= [{:test.check.insights/label-classifications
                label-classifications-category-1
                :test.check.insights/labels
-               {:test.check.insights/labled   [[0] [-1] [1] [1]]
-                :test.check.insights/unlabled #{["a"]}
-                :negative                     [[-1]]
-                :positive                     [[0] [1]]
-                :ones                         [[1]]}}
+               {:test.check.insights/labeled   [[0] [-1] [1] [1]]
+                :test.check.insights/unlabeled #{["a"]}
+                :negative                      [[-1]]
+                :positive                      [[0] [1]]
+                :ones                          [[1]]}}
               {:test.check.insights/label-classifications
                label-classifications-category-2
                :test.check.insights/labels
-               {:test.check.insights/labled   []
-                :test.check.insights/unlabled #{[1]}
-                :more-neg                     []
-                :less-neg                     []}}]
+               {:test.check.insights/labeled   []
+                :test.check.insights/unlabeled #{[1]}
+                :more-neg                      []
+                :less-neg                      []}}]
              (sut/update-labels labels [1]))))))
 
 (deftest humanize-report
@@ -78,15 +78,15 @@
           {:more-neg 0.0
            :less-neg 100.0}]
          (sut/humanize-report
-          [{:test.check.insights/labled
+          [{:test.check.insights/labeled
             [[0] [1] [1] [0] [2] [-3] [1] [1] [-2] [1] [1] [3] [7]]
-            :test.check.insights/unlabled #{}
-            :negative                     [[-3] [-2]]
-            :positive                     [[0] [1] [0] [2] [1] [1] [3] [7]]
-            :ones                         [[1] [1] [1]]}
-           {:test.check.insights/labled   [[-3] [-2]]
-            :test.check.insights/unlabled #{[7] [3] [0] [2] [1]}
-            :more-neg                     []
-            :less-neg                     [[-3] [-2]]}]))))
+            :test.check.insights/unlabeled #{}
+            :negative                      [[-3] [-2]]
+            :positive                      [[0] [1] [0] [2] [1] [1] [3] [7]]
+            :ones                          [[1] [1] [1]]}
+           {:test.check.insights/labeled   [[-3] [-2]]
+            :test.check.insights/unlabeled #{[7] [3] [0] [2] [1]}
+            :more-neg                      []
+            :less-neg                      [[-3] [-2]]}]))))
 
 

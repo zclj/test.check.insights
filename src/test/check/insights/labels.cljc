@@ -8,8 +8,8 @@
       (fn [acc k]
         (assoc-in acc [:test.check.insights/labels k] []))
       {:test.check.insights/labels
-       {:test.check.insights/labled   []
-        :test.check.insights/unlabled #{}}
+       {:test.check.insights/labeled   []
+        :test.check.insights/unlabeled #{}}
        :test.check.insights/label-classifications
        label-category}
       (keys label-category)))
@@ -26,15 +26,15 @@
               (update-in
                [:test.check.insights/labels k] conj args)
               (update-in
-               [:test.check.insights/labels :test.check.insights/labled] conj args)
+               [:test.check.insights/labels :test.check.insights/labeled] conj args)
               ;; remove from set
               (update-in
-               [:test.check.insights/labels :test.check.insights/unlabled]
+               [:test.check.insights/labels :test.check.insights/unlabeled]
                disj args))
           acc))
       (update-in
        label-category
-       [:test.check.insights/labels :test.check.insights/unlabled] conj args)
+       [:test.check.insights/labels :test.check.insights/unlabeled] conj args)
       (:test.check.insights/label-classifications label-category)))
    label-categories))
 
@@ -50,7 +50,7 @@
   (mapv
    (fn [report]
      (let [clean-report
-           (dissoc report :test.check.insights/labled :test.check.insights/unlabled)
+           (dissoc report :test.check.insights/labeled :test.check.insights/unlabeled)
            total-count (reduce + (map #(count (val %)) clean-report))]
        (reduce-kv
         (fn [acc k collected]
