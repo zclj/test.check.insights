@@ -4,6 +4,21 @@ Get insights into your test.check generators by the use of labeling, classificat
 
 **STATUS**: [*pre-alpha*](#pre-alpha)
 
+## Getting Started
+
+### deps.edn
+
+```clj
+{:deps
+ {zclj/test.check.insights
+  {:git/url "https://github.com/zclj/test.check.insights.git"
+   :sha     ""}}}
+```
+
+### lein
+
+upcoming..
+
 ## quick-check with insights
 
 test.check.insights wraps test.check's `for-all` and `quick-check` to expose its functionality with a familiar API.
@@ -375,7 +390,7 @@ If we look at the result above again, we can see that the first category passed 
                                   :insufficiently-covered? true}}}]
 ```
 
-Only the initial 100 test are required to reach `:insufficiently-covered? true` for the `:ones` criterion.
+Only the initial 100 test are required to reach `:insufficiently-covered? true` for the `:ones` criterion. Note that the count of `:negative` is on target (more than 50% of the values) but the `:sufficiently-covered?` is still `false`. This is due to that significance have not been reached with this number of tests.
 
 Since the output from `check-coverage` is the same as from `quick-check` with regards to coverage, `humanize-report` can be used:
 
@@ -414,7 +429,7 @@ Since the output from `check-coverage` is the same as from `quick-check` with re
    :test.check.insights/statistically-failed #{:more-neg}}}]
 ```
 
-This will display the percentages instead of counts. Note that the percentages of `:negative` is on target but the `:sufficiently-covered?` is still `false`. This is due to that significance have not been reached with this number of tests.
+This will display the percentages instead of counts.
 
 Finally, there is one more way the coverage check can fail and that is if the max number of allowed tests are reached before reaching a conclusion.  
 
