@@ -1,5 +1,5 @@
 (ns test.check.insights.collect-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest is]]
             [test.check.insights.collect :as sut]))
 
 (deftest collect-arguments
@@ -31,6 +31,4 @@
             6  [[6]]
             -6 [[-6]]}
            {1 [[1] [1]]
-            2 [[2] [2]]}])))
-  )
-
+            2 [[2] [2]]}]))))

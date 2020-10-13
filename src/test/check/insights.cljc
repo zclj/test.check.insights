@@ -192,5 +192,4 @@
   (check-coverage 100 property-with-far-off-coverage)
 
   (check-coverage 100 property-with-coverage :max-number-of-tests 1)
-  
   )
