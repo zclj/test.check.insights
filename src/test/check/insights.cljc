@@ -163,9 +163,12 @@
   (quick-check 10 property :seed 1)
 
   (quick-check
-   10 property
-   :seed 1 :reporter-fn #(println %)
-   :reporter-filter-fn (fn [m] (println "I'm a FILTER") (= (:type m) :trial)))
+   10
+   property
+   :seed 1
+   :reporter-fn #(println %)
+   :reporter-filter-fn
+   (fn [m] (println "I'm a FILTER") (= (:type m) :trial)))
 
   (humanize-report (quick-check 10 property))
   )
@@ -201,6 +204,8 @@
      (= x x)))
 
   (quick-check 10 property-with-coverage :seed 1)
+  
+  (check-coverage 100 property-with-coverage)
 
   (def property-with-collect
     (for-all
@@ -209,4 +214,19 @@
      (= x x)))
 
   (quick-check 10 property-with-collect :seed 1)
+
+  (def property-with-far-off-coverage
+    (for-all
+     {::coverage
+      [{:negative {::classify (fn [x] (< x 0))
+                   ::cover    50}
+        :positive {::classify (fn [x] (>= x 0))
+                   ::cover    50}
+        :ones     {::classify (fn [x] (= x 1))
+                   ::cover    50}}]}
+     [x gen/int]
+     (= x x)))
+
+  (check-coverage 100 property-with-far-off-coverage)
+  
   )
