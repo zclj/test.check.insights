@@ -33,24 +33,24 @@ In general, all library specific keys are namespaced.
 ;; define a property
 (def property
   (tci/for-all
-   {::coverage
-    [{:negative {::classify (fn [x] (< x 0))
-                 ::cover    50}
-      :positive {::classify (fn [x] (>= x 0))
-                 ::cover    50}
-      :ones     {::classify (fn [x] (= x 1))
-                 ::cover    1.2}}
-     {:more-neg {::classify (fn [x] (< x -100))
-                 ::cover    10}
-      :less-neg {::classify (fn [x] (and (> x -100)  x 0)))
-                 ::cover    10}}]
-    ::labels
-    [{:negative {::classify (fn [x] (< x 0))}
-      :positive {::classify (fn [x] (>= x 0))}
-      :ones     {::classify (fn [x] (= 1 x))}}
-     {:more-neg {::classify (fn [x] (< x -100))}
-      :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))}}]
-    ::collect [{::collector (fn [x] (identity x))}]}
+   {::tci/coverage
+    [{:negative {::tci/classify (fn [x] (< x 0))
+                 ::tci/cover    50}
+      :positive {::tci/classify (fn [x] (>= x 0))
+                 ::tci/cover    50}
+      :ones     {::tci/classify (fn [x] (= x 1))
+                 ::tci/cover    1.2}}
+     {:more-neg {::tci/classify (fn [x] (< x -100))
+                 ::tci/cover    10}
+      :less-neg {::tci/classify (fn [x] (and (> x -100)  x 0)))
+                 ::tci/cover    10}}]
+    ::tci/labels
+    [{:negative {::tci/classify (fn [x] (< x 0))}
+      :positive {::tci/classify (fn [x] (>= x 0))}
+      :ones     {::tci/classify (fn [x] (= 1 x))}}
+     {:more-neg {::tci/classify (fn [x] (< x -100))}
+      :less-neg {::tci/classify (fn [x] (and (> x -100) (< x 0)))}}]
+    ::tci/collect [{::tci/collector (fn [x] (identity x))}]}
    [x gen/int]
    (= x x)))
 
@@ -66,17 +66,17 @@ In general, all library specific keys are namespaced.
 
 Labels are defined as a vector of label categories. Each element in the vector is a map where the key is the name of the label and the value is a map containing the predicate used to classify the label.
 
-Labeling will apply the `::classify` predicate with the arguments from the generators and the generator bindings. Hence the arity of the predicate function must match your generator bindings.
+Labeling will apply the `:test.check.insights/classify` predicate with the arguments from the generators and the generator bindings. Hence the arity of the predicate function must match your generator bindings.
 
 ```clj
 (def property-with-labels
   (tci/for-all
-    {::labels
-     [{:negative {::classify (fn [x] (< x 0))}
-       :positive {::classify (fn [x] (>= x 0))}
-       :ones     {::classify (fn [x] (= 1 x))}}
-      {:more-neg {::classify (fn [x] (< x -100))}
-       :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))}}]}
+    {::tci/labels
+     [{:negative {::tci/classify (fn [x] (< x 0))}
+       :positive {::tci/classify (fn [x] (>= x 0))}
+       :ones     {::tci/classify (fn [x] (= 1 x))}}
+      {:more-neg {::tci/classify (fn [x] (< x -100))}
+       :less-neg {::tci/classify (fn [x] (and (> x -100) (< x 0)))}}]}
      [x gen/int]
      (= x x)))
 
@@ -104,7 +104,7 @@ The result is merged with the test.check result:
    :less-neg [[-2] [-2] [-3] [-2]]}]}
 ```
 
-Each labeled value is included in its label. `::labeled` include all labeled values, once for each predicate match. `::unlabeled` contains any values that did not match a label classification.
+Each labeled value is included in its label. `:test.check.insights/labeled` include all labeled values, once for each predicate match. `:test.check.insights/unlabeled` contains any values that did not match a label classification.
 
 The result can be humanized :
 
@@ -125,22 +125,22 @@ The humanized report show the classified percentages for each label in relation 
 
 ### Coverage
 
-Coverage criterion is defined as a vector of maps, where each map represents a coverage category. The key in the map is the name of the coverage criterion. The value of the map should contain a predicate, `::classify` to determine if a generated value counts as covered towards this criterion and a coverage percentage, `::cover`.
+Coverage criteria is defined as a vector of maps, where each map represents a coverage category. The key in the map is the name of the coverage criterion. The value of the map should contain a predicate ,`::test.check.insights/classify`, to determine if a generated value counts as covered towards this criterion and a coverage percentage, `::test.check.insights/cover`.
 
 ```clj
 (def property-with-coverage
   (tci/for-all
-    {::coverage
-     [{:negative {::classify (fn [x] (< x 0))
-                  ::cover    50}
-       :positive {::classify (fn [x] (>= x 0))
-                  ::cover    50}
-       :ones     {::classify (fn [x] (= x 1))
-                  ::cover    1.2}}
-      {:more-neg {::classify (fn [x] (< x -100))
-                  ::cover    10}
-       :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))
-                  ::cover    10}}]}
+    {::tci/coverage
+     [{:negative {::tci/classify (fn [x] (< x 0))
+                  ::tci/cover    50}
+       :positive {::tci/classify (fn [x] (>= x 0))
+                  ::tci/cover    50}
+       :ones     {::tci/classify (fn [x] (= x 1))
+                  ::tci/cover    1.2}}
+      {:more-neg {::tci/classify (fn [x] (< x -100))
+                  ::tci/cover    10}
+       :less-neg {::tci/classify (fn [x] (and (> x -100) (< x 0)))
+                  ::tci/cover    10}}]}
     [x gen/int]
     (= x x)))
 ```
@@ -183,9 +183,9 @@ The result is merged with test.check result:
                                   :insufficiently-covered? false}}]}
 ```
 
-`quick-check` will show the evaluated coverage (where [`check-coverage`](#check-coverage) will fail the test if coverage are not met). See [below](#check-coverage) for the meaning of `:sufficiently-covered?` and `:insufficiently-covered?`.
+`quick-check` will show the evaluated coverage (where [`check-coverage`](#check-coverage) will fail the test if coverage are not met). See [below](#check-coverage) for the meaning of `:test.check.insights.coverage/sufficiently-covered?` and `:test.check.insights.coverage/insufficiently-covered?`.
 
-The result can be humanized, which show the coverage statistics as percentages and includes a list of the failed criterion :
+The result can be humanized, which will then show the coverage statistics as percentages and includes a list of the failed criteria :
 
 ```clj
 (tci/humanize-report (tci/quick-check 10 property-with-coverage :seed 1))
@@ -212,12 +212,12 @@ The result can be humanized, which show the coverage statistics as percentages a
 
 ### Collect
 
-While labeling and coverage are based on classification predicates, collect is based on value producing functions. `::collect` is defined as a vector of maps witch includes the value producing function in the `::collector` key.
+While labeling and coverage are based on classification predicates, collect is based on value producing functions. `:test.check.insights/collect` is defined as a vector of maps witch includes the value producing function in the `:test.check.insights/collector` key.
 
 ```clj
 (def property-with-collect
   (tci/for-all
-    {::collect [{::collector (fn [x] (identity x))}]}
+    {::tci/collect [{::tci/collector (fn [x] (identity x))}]}
     [x gen/int]
     (= x x)))
 ```
@@ -279,22 +279,22 @@ When building more complex generators it can be critical to verify that the valu
 
 ### check-coverage
 
-Given a property with coverage criterion:
+Given a property with coverage criteria:
 
 ```clj
 (def property-with-coverage
   (tci/for-all
-   {::coverage
-    [{:negative {::classify (fn [x] (< x 0))
-                 ::cover    50}
-      :positive {::classify (fn [x] (>= x 0))
-                 ::cover    50}
-      :ones     {::classify (fn [x] (= x 1))
-                 ::cover    1.2}}
-     {:more-neg {::classify (fn [x] (< x -100))
-                 ::cover    10}
-      :less-neg {::classify (fn [x] (and (> x -100) (< x 0)))
-                 ::cover    10}}]}
+   {::tci/coverage
+    [{:negative {::tci/classify (fn [x] (< x 0))
+                 ::tci/cover    50}
+      :positive {::tci/classify (fn [x] (>= x 0))
+                 ::tci/cover    50}
+      :ones     {::tci/classify (fn [x] (= x 1))
+                 ::tci/cover    1.2}}
+     {:more-neg {::tci/classify (fn [x] (< x -100))
+                 ::tci/cover    10}
+      :less-neg {::tci/classify (fn [x] (and (> x -100) (< x 0)))
+                 ::tci/cover    10}}]}
    [x gen/int]
    (= x x)))
 ```
@@ -355,13 +355,13 @@ If we look at the result above again, we can see that the first category passed 
 ;; Require 50% of values to be ones
 (def property-with-far-off-coverage
   (tci/for-all
-   {::coverage
-    [{:negative {::classify (fn [x] (< x 0))
-                 ::cover    50}
-      :positive {::classify (fn [x] (>= x 0))
-                 ::cover    50}
-      :ones     {::classify (fn [x] (= x 1))
-                 ::cover    50}}]}
+   {::tci/coverage
+    [{:negative {::tci/classify (fn [x] (< x 0))
+                 ::tci/cover    50}
+      :positive {::tci/classify (fn [x] (>= x 0))
+                 ::tci/cover    50}
+      :ones     {::tci/classify (fn [x] (= x 1))
+                 ::tci/cover    50}}]}
    [x gen/int]
    (= x x)))
 
