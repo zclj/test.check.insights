@@ -42,7 +42,7 @@ In general, all library specific keys are namespaced.
                  ::tci/cover    1.2}}
      {:more-neg {::tci/classify (fn [x] (< x -100))
                  ::tci/cover    10}
-      :less-neg {::tci/classify (fn [x] (and (> x -100)  x 0)))
+      :less-neg {::tci/classify (fn [x] (and (> x -100) (< x 0)))
                  ::tci/cover    10}}]
     ::tci/labels
     [{:negative {::tci/classify (fn [x] (< x 0))}
