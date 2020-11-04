@@ -43,7 +43,18 @@
             (sut/quick-check 10 property :seed 1)
             [::sut/labels
              ::sut/coverage
-             ::sut/collect])))))
+             ::sut/collect]))))
+  (testing "quick-check should handle failing property"
+    (let [property-failing
+          (sut/for-all
+           {:test.check.insights/coverage
+            [{:negative {:test.check.insights/classify (fn [x] (< x 0))
+                         :test.check.insights/cover    50}
+              :positive {:test.check.insights/classify (fn [x] (>= x 0))
+                         :test.check.insights/cover    50}}]}
+           [x gen/int]
+           (not= x x))]
+      (is (= false (:pass? (sut/quick-check 1 property-failing :seed 1)))))))
 
 (deftest humanize-report
   (testing "reports should be humanized"
