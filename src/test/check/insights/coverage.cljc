@@ -87,14 +87,18 @@
 
 (defn sufficiently-covered?
   [{:keys [certainty tolerance]} n k p]
-  (>= (wilson-low k n (/ 1 certainty))
-      (* tolerance p)))
+  (if-not (zero? n)
+    (>= (wilson-low k n (/ 1 certainty))
+        (* tolerance p))
+    false))
 
 (defn insufficiently-covered?
   [certainty n k p]
-  (if certainty
-    (< (wilson-high k n (/ 1 certainty)) p)
-    (< k (* p n))))
+  (if-not (zero? n)
+    (if certainty
+      (< (wilson-high k n (/ 1 certainty)) p)
+      (< k (* p n)))
+    false))
 
 (def default-confidence
   {:certainty 1.0E9
