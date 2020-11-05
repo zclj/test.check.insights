@@ -12,7 +12,7 @@ Get insights into your test.check generators by the use of labeling, classificat
 {:deps
  {zclj/test.check.insights
   {:git/url "https://github.com/zclj/test.check.insights.git"
-   :sha     "5d7c00873d0ecf5a4344a9659aeca842dd6d9fb5"}}}
+   :sha     "3feeb9fadd654988ec2675113e81d975167c17d5"}}}
 ```
 
 ### lein
@@ -28,7 +28,8 @@ test.check.insights wraps test.check's `for-all` and `quick-check` to expose its
 In general, all library specific keys are namespaced.
 
 ```clj
-(require '[test.check.insights :as tci])
+(require '[test.check.insights :as tci]
+         '[clojure.test.check.generators :as gen])
 
 ;; define a property
 (def property
